@@ -1,0 +1,28 @@
+# --- Secrets: never commit these ---
+.env
+.env.*
+!.env.example
+*.key
+*.pem
+secrets.yaml
+
+# --- promptfoo local state & outputs ---
+.promptfoo/
+output.json
+output.csv
+output.yaml
+output.html
+promptfoo-errors.log
+*.db
+*.db-shm
+*.db-wal
+
+# --- Node ---
+node_modules/
+npm-debug.log*
+
+# --- OS / editor ---
+.DS_Store
+Thumbs.db
+desktop.ini
+.vscode/
