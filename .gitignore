@@ -17,9 +17,8 @@ promptfoo-errors.log
 *.db-shm
 *.db-wal
 
-# --- Node ---
+# --- Local junk ---
 node_modules/
-npm-debug.log*
 
 # --- OS / editor ---
 .DS_Store

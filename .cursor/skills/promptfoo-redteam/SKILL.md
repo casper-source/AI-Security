@@ -5,11 +5,28 @@ description: >-
   config correctness traps, plugin and strategy selection, concurrency and
   runtime budgeting, and reading true attack success rates out of the local eval
   database. Use when working with promptfooconfig.yaml or redteam.yaml, running
-  promptfoo redteam generate/eval/report, choosing red-team plugins or
+  promptfoo redteam generate/eval/run/report, choosing red-team plugins or
   strategies, or interpreting attack success rates and breach counts.
 ---
 
 # promptfoo Red-Teaming
+
+## Commands this project uses
+
+Promptfoo is global. No `package.json`, no `npm run`. From the repo root:
+
+```powershell
+promptfoo redteam run --remote -j 3
+promptfoo redteam generate -o redteam.yaml
+promptfoo redteam eval -c redteam.yaml --remote -j 3
+promptfoo redteam eval -c redteam-retest.yaml --remote -j 3 --no-cache
+promptfoo redteam report
+node --experimental-sqlite scripts/asr.js
+node --experimental-sqlite scripts/asr.js <eval-id>
+```
+
+`--remote` is required at eval/`run` time or `jailbreak:hydra` fails to load.
+Use `-j 3` whenever multi-turn strategies are in the mix.
 
 ## Config traps that silently void a scan
 
@@ -109,7 +126,7 @@ strategies:
 
 `jailbreak:hydra` and other remote strategies fail at **eval** time with
 `requires remote generation, which is currently disabled` even when generation
-succeeded. Pass `--remote` to `promptfoo redteam eval`. Note `promptfoo validate`
+succeeded. Pass `--remote` to `promptfoo redteam run` or `promptfoo redteam eval`. Note `promptfoo validate`
 accepts no such flag, so it will report these configs invalid; that is expected.
 
 ### Caching makes a re-run a replay
@@ -140,11 +157,12 @@ payloads before the model saw them.
 Always report the upstream-blocked count separately. A 0% ASR on a plugin whose
 payloads were mostly filtered means **untested**, not secure.
 
-Use `scripts/asr.js` rather than recomputing this by hand:
+Use `scripts/asr.js` rather than recomputing this by hand. It also writes
+`reports/<eval-id>.json` and `.txt` so the snapshot is in the repo:
 
 ```powershell
-node --experimental-sqlite .cursor/skills/promptfoo-redteam/scripts/asr.js
-node --experimental-sqlite .cursor/skills/promptfoo-redteam/scripts/asr.js <eval-id>
+node --experimental-sqlite scripts/asr.js
+node --experimental-sqlite scripts/asr.js <eval-id>
 ```
 
 ## Querying the results database

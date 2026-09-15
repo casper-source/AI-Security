@@ -1,0 +1,88 @@
+{
+  "evalId": "eval-D5T-2026-09-15T21:06:33",
+  "description": "Exercise 2",
+  "createdAt": 1789506393275,
+  "db": "C:\\Users\\anokh\\.promptfoo\\promptfoo.db",
+  "recorded": 74,
+  "reached": 53,
+  "blocked": 21,
+  "defended": 30,
+  "breaches": 23,
+  "asr": 0.4339622641509434,
+  "asrPercent": "43.4%",
+  "plugins": [
+    {
+      "id": "cca",
+      "reached": 12,
+      "breach": 7,
+      "blocked": 2,
+      "asr": 0.5833333333333334,
+      "untested": false
+    },
+    {
+      "id": "off-topic",
+      "reached": 12,
+      "breach": 6,
+      "blocked": 0,
+      "asr": 0.5,
+      "untested": false
+    },
+    {
+      "id": "hijacking",
+      "reached": 11,
+      "breach": 5,
+      "blocked": 1,
+      "asr": 0.45454545454545453,
+      "untested": false
+    },
+    {
+      "id": "hallucination",
+      "reached": 10,
+      "breach": 4,
+      "blocked": 2,
+      "asr": 0.4,
+      "untested": false
+    },
+    {
+      "id": "policy",
+      "reached": 8,
+      "breach": 1,
+      "blocked": 16,
+      "asr": 0.125,
+      "untested": false
+    }
+  ],
+  "strategies": [
+    {
+      "id": "jailbreak:composite",
+      "reached": 39,
+      "breach": 17,
+      "blocked": 21,
+      "asr": 0.4358974358974359,
+      "meanLatencySeconds": 7.86355
+    },
+    {
+      "id": "basic",
+      "reached": 12,
+      "breach": 4,
+      "blocked": 0,
+      "asr": 0.3333333333333333,
+      "meanLatencySeconds": 6.887333333333333
+    },
+    {
+      "id": "jailbreak:hydra",
+      "reached": 2,
+      "breach": 2,
+      "blocked": 0,
+      "asr": 1,
+      "meanLatencySeconds": 52.2655
+    }
+  ],
+  "untested": [],
+  "errorSignatures": [
+    {
+      "count": 21,
+      "signature": "API error: 400 Bad Request {\"error\":{\"message\":\"This content was flagged for possible cybersecurity "
+    }
+  ]
+}
