@@ -1,0 +1,13 @@
+{
+  "name": "merci-target",
+  "version": "1.0.0",
+  "private": true,
+  "type": "module",
+  "description": "MerciBank Assistant — deliberately-vulnerable AI target for the EnGenious AI Security Cohort (Week 2 labs).",
+  "scripts": {
+    "start": "node server.mjs"
+  },
+  "engines": {
+    "node": ">=18"
+  }
+}

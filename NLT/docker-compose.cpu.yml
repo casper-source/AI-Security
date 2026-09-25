@@ -1,0 +1,70 @@
+services:
+  # Ollama service optimized for AMD/CPU
+  ollama:
+    image: ollama/ollama:latest
+    container_name: nlt_ollama_cpu
+    restart: unless-stopped
+    ports:
+      - "11435:11434"
+    volumes:
+      - ollama_data:/root/.ollama
+    environment:
+      - OLLAMA_HOST=0.0.0.0
+      - OLLAMA_NUM_PARALLEL=2
+      - OLLAMA_MAX_LOADED_MODELS=1
+    # CPU optimization for AMD Ryzen
+    deploy:
+      resources:
+        limits:
+          cpus: '0'  # Use all available CPU cores
+          memory: 8G
+    networks:
+      - ollama_network
+    healthcheck:
+      test: ["CMD-SHELL", "ollama list || exit 1"]
+      interval: 30s
+      timeout: 10s
+      retries: 5
+      start_period: 30s
+
+  # Chatbot web application
+  chatbot:
+    build: .
+    container_name: nlt_chatbot
+    restart: unless-stopped
+    ports:
+      - "5000:5000"
+    volumes:
+      - chatbot_data:/app/data
+      - ./.selected_model:/app/.selected_model
+    environment:
+      - OLLAMA_BASE_URL=http://ollama:11434
+      - FLASK_ENV=production
+      - DATABASE_PATH=/app/data/nlt_customer_service.db
+      - ANONYMIZED_TELEMETRY=False
+      - CHROMA_TELEMETRY_ENABLED=false
+      - CHROMADB_TELEMETRY_DISABLED=true
+      - POSTHOG_DISABLED=true
+      # AI Security Teaching Level (1-5)
+      - AI_SECURITY_LEVEL=${AI_SECURITY_LEVEL:-1}
+    depends_on:
+      ollama:
+        condition: service_healthy
+    networks:
+      - ollama_network
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:5000/api/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 10s
+
+networks:
+  ollama_network:
+    driver: bridge
+
+volumes:
+  ollama_data:
+    driver: local
+  chatbot_data:
+    driver: local

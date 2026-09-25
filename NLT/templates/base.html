@@ -1,0 +1,921 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="csrf-token" content="{{ csrf_token() }}">
+    <title>{% block title %}NodeLine Tech - Premium Cables & Accessories{% endblock %}</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='nlt.css') }}?v=chatsize1">
+    <link rel="icon" type="image/x-icon" href="{{ url_for('static', filename='favicon.ico') }}">
+    <meta name="description" content="{% block description %}NodeLine Tech - Your trusted source for premium USB-C, HDMI, charging cables and tech accessories. Fast shipping, lifetime warranty.{% endblock %}">
+    {% block extra_head %}{% endblock %}
+</head>
+<body>
+    <!-- Navigation Header -->
+    <nav class="navbar">
+        <div class="nav-container">
+            <div class="nav-brand">
+                <a href="{{ url_for('homepage') }}" class="brand-logo">
+                    <span class="logo-icon">🔌</span>
+                    <span class="brand-text">NodeLine Tech</span>
+                </a>
+            </div>
+            
+            <div class="nav-menu" id="nav-menu">
+                <a href="{{ url_for('homepage') }}" class="nav-link {% if request.endpoint == 'homepage' %}active{% endif %}">Home</a>
+                <a href="{{ url_for('products') }}" class="nav-link {% if request.endpoint == 'products' %}active{% endif %}">Products</a>
+                <a href="{{ url_for('tickets') }}" class="nav-link {% if request.endpoint == 'tickets' %}active{% endif %}" id="tickets-link" style="display: none;">
+                    My Tickets
+                </a>
+                <a href="#" id="nav-chat-trigger" class="nav-link chat-link">
+                    <span class="chat-icon">💬</span> Live Chat
+                </a>
+            </div>
+            
+            <div class="nav-user">
+                <div id="user-menu" class="user-menu">
+                    <span id="user-greeting" class="user-greeting" style="display: none;">
+                        Hello, <span id="user-name"></span>
+                    </span>
+                    <button id="auth-btn" class="btn btn-outline">Login</button>
+                </div>
+            </div>
+            
+            <div class="nav-toggle" id="nav-toggle">
+                <span class="bar"></span>
+                <span class="bar"></span>
+                <span class="bar"></span>
+            </div>
+        </div>
+    </nav>
+
+    <!-- Main Content -->
+    <main class="main-content">
+        {% block content %}{% endblock %}
+    </main>
+
+    <!-- Footer -->
+    <footer class="footer">
+        <div class="footer-container">
+            <div class="footer-simple">
+                <h3>NodeLine Tech</h3>
+                <p>Your trusted source for premium cables and accessories since 2018.</p>
+            </div>
+        </div>
+        
+        <div class="footer-bottom">
+            <div class="footer-container">
+                <p>&copy; 2026 NodeLine Tech. All rights reserved.</p>
+            </div>
+        </div>
+    </footer>
+
+
+    <!-- Login Modal -->
+    <div id="login-modal" class="modal" style="display: none;">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3>Customer Login</h3>
+                <span class="close-modal" id="close-login-modal">&times;</span>
+            </div>
+            <div class="modal-body">
+                <form id="login-form">
+                    <div class="form-group">
+                        <label for="login-email">Email:</label>
+                        <input type="email" id="login-email" name="email" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="login-password">Password:</label>
+                        <input type="password" id="login-password" name="password" required>
+                    </div>
+                    <div class="form-actions">
+                        <button type="submit" class="btn btn-primary">Login</button>
+                        <button type="button" id="show-register" class="btn btn-link">Create Account</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+
+            <script>
+            // Ensure any modal we open uses readable colors — defensive inline styles
+            function ensureModalReadability(modalEl) {
+                if (!modalEl) return;
+                const content = modalEl.querySelector('.modal-content');
+                if (content) {
+                    content.style.backgroundColor = 'rgba(15, 17, 21,0.98)';
+                    content.style.color = '#e8eaed';
+                    // also ensure close buttons are visible
+                    const close = content.querySelector('.close-modal');
+                    if (close) close.style.color = '#e8eaed';
+                    // force all text descendants to inherit the color
+                    const descendants = content.querySelectorAll('*');
+                    descendants.forEach(el => el.style.color = '#e8eaed');
+                }
+            }
+
+            // Hook into modal opens across the site
+            document.addEventListener('click', function(e) {
+                // If something opens a modal by toggling style.display = 'flex' or similar, detect the modal ancestor
+                const modal = e.target.closest('.modal');
+                if (modal && (modal.style.display === 'flex' || getComputedStyle(modal).display === 'flex')) {
+                    ensureModalReadability(modal);
+                }
+            });
+
+            // Also observe DOM for modals being shown programmatically
+            const observer = new MutationObserver((mutations) => {
+                for (const m of mutations) {
+                    if (m.type === 'attributes' && m.target && m.target.classList && m.target.classList.contains('modal')) {
+                        if (getComputedStyle(m.target).display === 'flex') ensureModalReadability(m.target);
+                    }
+                }
+            });
+            // Start observing any modals present now
+            document.querySelectorAll('.modal').forEach(modal => observer.observe(modal, { attributes: true }));
+            </script>
+
+    <!-- Register Modal -->
+    <div id="register-modal" class="modal" style="display: none;">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3>Create Account</h3>
+                <span class="close-modal" id="close-register-modal">&times;</span>
+            </div>
+            <div class="modal-body">
+                <form id="register-form">
+                    <div class="form-group">
+                        <label for="register-email">Email:</label>
+                        <input type="email" id="register-email" name="email" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="register-first-name">First Name:</label>
+                        <input type="text" id="register-first-name" name="first_name" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="register-last-name">Last Name:</label>
+                        <input type="text" id="register-last-name" name="last_name" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="register-password">Password:</label>
+                        <input type="password" id="register-password" name="password" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="register-phone">Phone (optional):</label>
+                        <input type="tel" id="register-phone" name="phone">
+                    </div>
+                    <div class="form-group">
+                        <label for="register-company">Company (optional):</label>
+                        <input type="text" id="register-company" name="company">
+                    </div>
+                    <div class="form-actions">
+                        <button type="submit" class="btn btn-primary">Create Account</button>
+                        <button type="button" id="show-login" class="btn btn-link">Already have account? Login</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <!-- Floating Chat Widget -->
+    <div id="floating-chat-widget" class="floating-chat-widget">
+        <!-- Chat Toggle Button -->
+        <div id="chat-toggle-btn" class="chat-toggle-btn">
+            <span class="chat-icon">💬</span>
+            <span class="notification-dot" id="notification-dot" style="display: none;"></span>
+        </div>
+
+        <!-- Chat Window -->
+        <div id="chat-window" class="chat-window" style="display: none;">
+            <div id="chat-resize-handle" class="chat-resize-handle" title="Drag to resize"></div>
+            <div class="chat-header">
+                <div class="chat-header-info">
+                    <div class="agent-avatar-small">🤖</div>
+                    <div class="agent-info">
+                        <h4>NLTBot</h4>
+                        <span class="status-text">Online</span>
+                    </div>
+                </div>
+                <div class="chat-controls">
+                    <button id="minimize-chat" class="control-btn" title="Minimize">−</button>
+                    <button id="close-chat" class="control-btn" title="End Conversation & Close">×</button>
+                </div>
+            </div>
+
+            <div id="floating-chat-messages" class="floating-chat-messages">
+                <div class="welcome-message-floating">
+                    <div class="agent-avatar">🤖</div>
+                    <div class="message-content">
+                        <h4>Hi! I'm NLTBot</h4>
+                        <p>I'm here to help you find the perfect cables and accessories. Ask me about products, compatibility, or any technical questions!</p>
+                    </div>
+                </div>
+            </div>
+
+            <div class="floating-typing-indicator" id="floating-typing-indicator" style="display: none;">
+                <div class="typing-dots">
+                    <span></span>
+                    <span></span>
+                    <span></span>
+                </div>
+                <span>NLTBot is typing...</span>
+            </div>
+
+            <form id="floating-chat-form" class="floating-chat-input-form" method="dialog" action="" onsubmit="event.preventDefault(); event.stopPropagation(); return false;" novalidate>
+                <div class="floating-input-group">
+                    <textarea 
+                        id="floating-message-input" 
+                        placeholder="Type your message here..." 
+                        rows="1"
+                        maxlength="1000"
+                    ></textarea>
+                    <button type="button" id="floating-send-button" class="floating-send-button" disabled>
+                        <span class="send-icon">➤</span>
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <script src="{{ url_for('static', filename='script.js') }}"></script>
+    
+    <!-- Login Modal JavaScript -->
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            // Authentication elements
+            const authBtn = document.getElementById('auth-btn');
+            const loginModal = document.getElementById('login-modal');
+            const closeLoginModal = document.getElementById('close-login-modal');
+            const loginForm = document.getElementById('login-form');
+            const registerModal = document.getElementById('register-modal');
+            const closeRegisterModal = document.getElementById('close-register-modal');
+            const registerForm = document.getElementById('register-form');
+            const showRegisterBtn = document.getElementById('show-register');
+            const showLoginBtn = document.getElementById('show-login');
+            
+            let currentUser = null;
+            
+            // Immediately set logged-out state on page load
+            updateUserInterface(null);
+            
+            // Handle auth button click (login or logout)
+            if (authBtn) {
+                authBtn.addEventListener('click', function(e) {
+                    e.preventDefault();
+                    
+                    if (currentUser) {
+                        // User is logged in, so logout
+                        handleLogout();
+                    } else {
+                        // User is logged out, so show login modal
+                        if (loginModal) {
+                            loginModal.style.display = 'flex';
+                        }
+                    }
+                });
+            }
+            
+            // Close modals
+            if (closeLoginModal) {
+                closeLoginModal.addEventListener('click', function() {
+                    loginModal.style.display = 'none';
+                });
+            }
+            
+            if (closeRegisterModal) {
+                closeRegisterModal.addEventListener('click', function() {
+                    registerModal.style.display = 'none';
+                });
+            }
+            
+            // Switch between login and register
+            if (showRegisterBtn) {
+                showRegisterBtn.addEventListener('click', function() {
+                    loginModal.style.display = 'none';
+                    registerModal.style.display = 'flex';
+                });
+            }
+            
+            if (showLoginBtn) {
+                showLoginBtn.addEventListener('click', function() {
+                    registerModal.style.display = 'none';
+                    loginModal.style.display = 'flex';
+                });
+            }
+            
+            // Close modals when clicking outside
+            window.addEventListener('click', function(event) {
+                if (event.target === loginModal) {
+                    loginModal.style.display = 'none';
+                }
+                if (event.target === registerModal) {
+                    registerModal.style.display = 'none';
+                }
+            });
+            
+            // Handle login form submission
+            if (loginForm) {
+                loginForm.addEventListener('submit', function(e) {
+                    e.preventDefault();
+                    
+                    const email = document.getElementById('login-email').value;
+                    const password = document.getElementById('login-password').value;
+                    
+                    fetch('/api/login', {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json',
+                        },
+                        body: JSON.stringify({ email, password })
+                    })
+                    .then(response => response.json())
+                    .then(data => {
+                        if (data.success) {
+                            // Login successful
+                            loginModal.style.display = 'none';
+                            updateUserInterface(data.user);
+                            showNotification('Login successful!', 'success');
+                            
+                            // Reload page to update all user-specific content
+                            setTimeout(() => {
+                                window.location.reload();
+                            }, 1000);
+                        } else {
+                            showNotification('Login failed: ' + data.error, 'error');
+                        }
+                    })
+                    .catch(error => {
+                        console.error('Login error:', error);
+                        showNotification('Login failed. Please try again.', 'error');
+                    });
+                });
+            }
+            
+            // Handle register form submission
+            if (registerForm) {
+                registerForm.addEventListener('submit', function(e) {
+                    e.preventDefault();
+                    
+                    const formData = new FormData(registerForm);
+                    const registerData = Object.fromEntries(formData);
+                    
+                    fetch('/api/register', {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json',
+                        },
+                        body: JSON.stringify(registerData)
+                    })
+                    .then(response => response.json())
+                    .then(data => {
+                        if (data.success) {
+                            registerModal.style.display = 'none';
+                            showNotification('Registration successful! Please check your email to verify your account.', 'success');
+                            
+                            // Switch to login modal
+                            setTimeout(() => {
+                                loginModal.style.display = 'flex';
+                            }, 2000);
+                        } else {
+                            showNotification('Registration failed: ' + data.error, 'error');
+                        }
+                    })
+                    .catch(error => {
+                        console.error('Registration error:', error);
+                        showNotification('Registration failed. Please try again.', 'error');
+                    });
+                });
+            }
+            
+            // Handle logout
+            function handleLogout() {
+                fetch('/api/logout', {
+                    method: 'POST'
+                })
+                .then(response => response.json())
+                .then(data => {
+                    if (data.success) {
+                        updateUserInterface(null);
+                        showNotification('Logged out successfully!', 'success');
+                        
+                        // Reload page to clear user-specific content
+                        setTimeout(() => {
+                            window.location.reload();
+                        }, 1000);
+                    }
+                })
+                .catch(error => {
+                    console.error('Logout error:', error);
+                });
+            }
+            
+            // Update user interface based on login status
+            function updateUserInterface(user) {
+                const userGreeting = document.getElementById('user-greeting');
+                const userName = document.getElementById('user-name');
+                const ticketsLink = document.getElementById('tickets-link');
+                
+                console.log('updateUserInterface called with user:', user);
+                console.log('authBtn found:', !!authBtn);
+                
+                currentUser = user;
+                
+                if (user) {
+                    // User is logged in
+                    console.log('Setting logged in state');
+                    if (authBtn) {
+                        authBtn.textContent = 'Logout';
+                        authBtn.title = 'Click to logout';
+                    }
+                    if (userGreeting) {
+                        userGreeting.style.display = 'inline-block';
+                        if (userName) userName.textContent = user.name;
+                    }
+                    if (ticketsLink) ticketsLink.style.display = 'inline-block';
+                } else {
+                    // User is logged out
+                    console.log('Setting logged out state');
+                    if (authBtn) {
+                        authBtn.textContent = 'Login';
+                        authBtn.title = 'Click to login';
+                    }
+                    if (userGreeting) userGreeting.style.display = 'none';
+                    if (ticketsLink) ticketsLink.style.display = 'none';
+                }
+            }
+            
+            // Show notification
+            function showNotification(message, type) {
+                // Create notification element
+                const notification = document.createElement('div');
+                notification.className = `notification ${type}`;
+                notification.innerHTML = `
+                    <div class="notification-content">
+                        <span>${message}</span>
+                        <button class="notification-close">&times;</button>
+                    </div>
+                `;
+                
+                // Add styles if not already present
+                if (!document.getElementById('notification-styles')) {
+                    const style = document.createElement('style');
+                    style.id = 'notification-styles';
+                    style.textContent = `
+                        .notification {
+                            position: fixed;
+                            top: 20px;
+                            right: 20px;
+                            background: white;
+                            padding: 1rem 1.5rem;
+                            border-radius: 8px;
+                            box-shadow: 0 4px 20px rgba(0,0,0,0.15);
+                            z-index: 10000;
+                            transition: all 0.3s ease;
+                        }
+                        .notification.success {
+                            border-left: 4px solid #34d399;
+                        }
+                        .notification.error {
+                            border-left: 4px solid #ef4444;
+                        }
+                        .notification-content {
+                            display: flex;
+                            align-items: center;
+                            gap: 1rem;
+                        }
+                        .notification-close {
+                            background: none;
+                            border: none;
+                            font-size: 1.2rem;
+                            cursor: pointer;
+                            opacity: 0.7;
+                        }
+                        .notification-close:hover {
+                            opacity: 1;
+                        }
+                    `;
+                    document.head.appendChild(style);
+                }
+                
+                document.body.appendChild(notification);
+                
+                // Close notification
+                const closeBtn = notification.querySelector('.notification-close');
+                closeBtn.addEventListener('click', () => {
+                    notification.remove();
+                });
+                
+                // Auto-close after 5 seconds
+                setTimeout(() => {
+                    if (notification.parentNode) {
+                        notification.remove();
+                    }
+                }, 5000);
+            }
+            
+            // Check current user status on page load
+            fetch('/api/user')
+                .then(response => response.json())
+                .then(data => {
+                    if (data.success && data.user) {
+                        updateUserInterface(data.user);
+                    } else {
+                        updateUserInterface(null);
+                    }
+                })
+                .catch(error => {
+                    console.log('No user logged in');
+                    updateUserInterface(null);
+                });
+        });
+    </script>
+    
+    <!-- Floating Chat Widget JavaScript -->
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            const chatToggleBtn = document.getElementById('chat-toggle-btn');
+            const chatWindow = document.getElementById('chat-window');
+            const minimizeBtn = document.getElementById('minimize-chat');
+            const closeBtn = document.getElementById('close-chat');
+            const navChatTrigger = document.getElementById('nav-chat-trigger');
+            const floatingChatForm = document.getElementById('floating-chat-form');
+            const floatingMessageInput = document.getElementById('floating-message-input');
+            const floatingSendButton = document.getElementById('floating-send-button');
+            const floatingChatMessages = document.getElementById('floating-chat-messages');
+            const floatingTypingIndicator = document.getElementById('floating-typing-indicator');
+
+            let isChatOpen = localStorage.getItem('floating_chat_open') === 'true';
+            let messageHistory = JSON.parse(localStorage.getItem('floating_chat_history') || '[]');
+
+            function applySavedChatSize() {
+                try {
+                    const saved = JSON.parse(localStorage.getItem('floating_chat_size') || 'null');
+                    if (!saved || !saved.w || !saved.h) return;
+                    const maxW = window.innerWidth - 40;
+                    const maxH = window.innerHeight - 120;
+                    chatWindow.style.width = Math.min(Math.max(saved.w, 320), maxW) + 'px';
+                    chatWindow.style.height = Math.min(Math.max(saved.h, 380), maxH) + 'px';
+                } catch (e) { /* ignore bad cache */ }
+            }
+
+            function initChatResize() {
+                const handle = document.getElementById('chat-resize-handle');
+                if (!handle || !chatWindow) return;
+                let startX = 0, startY = 0, startW = 0, startH = 0, dragging = false;
+                handle.addEventListener('mousedown', function(e) {
+                    e.preventDefault();
+                    dragging = true;
+                    startX = e.clientX;
+                    startY = e.clientY;
+                    startW = chatWindow.offsetWidth;
+                    startH = chatWindow.offsetHeight;
+                    document.body.style.userSelect = 'none';
+                });
+                document.addEventListener('mousemove', function(e) {
+                    if (!dragging) return;
+                    const maxW = window.innerWidth - 40;
+                    const maxH = window.innerHeight - 120;
+                    const w = Math.min(Math.max(startW + (startX - e.clientX), 320), maxW);
+                    const h = Math.min(Math.max(startH + (startY - e.clientY), 380), maxH);
+                    chatWindow.style.width = w + 'px';
+                    chatWindow.style.height = h + 'px';
+                });
+                document.addEventListener('mouseup', function() {
+                    if (!dragging) return;
+                    dragging = false;
+                    document.body.style.userSelect = '';
+                    localStorage.setItem('floating_chat_size', JSON.stringify({
+                        w: chatWindow.offsetWidth,
+                        h: chatWindow.offsetHeight
+                    }));
+                });
+            }
+
+            function initializeChatState() {
+                applySavedChatSize();
+                if (isChatOpen) {
+                    chatWindow.style.display = 'flex';
+                    floatingMessageInput.focus();
+                } else {
+                    chatWindow.style.display = 'none';
+                }
+                restoreChatHistory();
+            }
+
+            // Toggle chat window
+            function toggleChat() {
+                if (isChatOpen) {
+                    chatWindow.style.display = 'none';
+                    isChatOpen = false;
+                    localStorage.setItem('floating_chat_open', 'false');
+                } else {
+                    chatWindow.style.display = 'flex';
+                    isChatOpen = true;
+                    localStorage.setItem('floating_chat_open', 'true');
+                    floatingMessageInput.focus();
+                }
+            }
+
+            // Event listeners
+            chatToggleBtn.addEventListener('click', toggleChat);
+            navChatTrigger.addEventListener('click', function(e) {
+                e.preventDefault();
+                if (!isChatOpen) {
+                    toggleChat();
+                }
+            });
+
+            // Handle all chat trigger buttons
+            document.addEventListener('click', function(e) {
+                if (e.target.classList.contains('chat-trigger-btn') || e.target.closest('.chat-trigger-btn')) {
+                    e.preventDefault();
+                    if (!isChatOpen) {
+                        toggleChat();
+                    }
+                }
+            });
+
+            minimizeBtn.addEventListener('click', function() {
+                chatWindow.style.display = 'none';
+                isChatOpen = false;
+                localStorage.setItem('floating_chat_open', 'false');
+            });
+
+            closeBtn.addEventListener('click', function() {
+                smartCloseChat();
+            });
+
+            // Smart close: End conversation and minimize
+            async function smartCloseChat() {
+                const conversationId = localStorage.getItem('floating_chat_conversation_id');
+                const hasMessages = messageHistory.length > 0;
+                
+                // Immediately close the chat for responsive UI
+                chatWindow.style.display = 'none';
+                isChatOpen = false;
+                localStorage.setItem('floating_chat_open', 'false');
+                
+                // Clear chat history immediately
+                clearChatHistory();
+                
+                // End conversation in the background (non-blocking)
+                if (conversationId && hasMessages) {
+                    // Don't await - let it run in background
+                    fetch('/api/conversation/end', {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json'
+                        },
+                        body: JSON.stringify({
+                            conversation_id: conversationId
+                        })
+                    }).then(response => {
+                        if (response.ok) {
+                            return response.json();
+                        }
+                    }).then(result => {
+                        if (result) {
+                            console.log('Conversation ended:', result.message || 'Successfully ended conversation');
+                        }
+                    }).catch(error => {
+                        console.error('Error ending conversation:', error);
+                    });
+                }
+            }
+
+            // Auto-resize textarea
+            floatingMessageInput.addEventListener('input', function() {
+                this.style.height = 'auto';
+                this.style.height = Math.min(this.scrollHeight, 80) + 'px';
+                
+                // Enable/disable send button
+                floatingSendButton.disabled = this.value.trim().length === 0;
+            });
+
+            let floatingInFlight = false;
+            function sendFloatingMessage() {
+                const message = floatingMessageInput.value.trim();
+                if (!message || floatingInFlight) {
+                    return;
+                }
+                floatingInFlight = true;
+
+                // Add user message to chat
+                addMessage(message, 'user');
+                floatingMessageInput.value = '';
+                floatingMessageInput.style.height = 'auto';
+                floatingSendButton.disabled = true;
+
+                // Show typing indicator
+                floatingTypingIndicator.style.display = 'flex';
+
+                // Log the request for debugging
+                console.log('Sending message to /api/chat');
+                console.log('Current location:', window.location.href);
+                console.log('Will fetch from:', window.location.origin + '/api/chat');
+
+                // Send message to backend
+                const apiUrl = window.location.origin + '/api/chat';
+                console.log('Starting fetch to:', apiUrl);
+                fetch(apiUrl, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    credentials: 'same-origin',
+                    body: JSON.stringify({ 
+                        message: message,
+                        conversation_id: localStorage.getItem('floating_chat_conversation_id')
+                    })
+                })
+                .then(response => {
+                    console.log('Response received, status:', response.status);
+                    console.log('Response ok:', response.ok);
+                    // Parse JSON regardless of status
+                    return response.json().then(data => ({ data, status: response.status, ok: response.ok }));
+                })
+                .then(({ data, status, ok }) => {
+                    console.log('JSON parsed, data:', data);
+                    // Hide typing indicator
+                    floatingTypingIndicator.style.display = 'none';
+                    
+                    // Check if request was successful
+                    if (!ok) {
+                        const errorMsg = data.error || `Server error: ${status}`;
+                        addMessage('Error: ' + errorMsg, 'ai');
+                        return;
+                    }
+                    
+                    // Store conversation ID for future messages
+                    if (data.conversation_id) {
+                        localStorage.setItem('floating_chat_conversation_id', data.conversation_id);
+                    }
+                    
+                    // Add AI response to chat with RAG and tickets info
+                    if (data.success && data.response) {
+                        addMessage(data.response, 'ai', false, {
+                            rag_used: data.rag_used,
+                            rag_context_length: data.rag_context_length,
+                            tickets_used: data.tickets_used,
+                            tickets_count: data.tickets_count,
+                            response_time_ms: data.response_time_ms
+                        });
+                    } else if (data.error) {
+                        addMessage('Sorry, there was an error: ' + data.error, 'ai');
+                    } else {
+                        // Handle case where success is false but no error message
+                        addMessage('Sorry, an unexpected error occurred. Please try again.', 'ai');
+                    }
+                })
+                .catch(error => {
+                    console.error('Error:', error);
+                    console.error('Error type:', error.name);
+                    console.error('Error message:', error.message);
+                    console.error('Full error:', JSON.stringify(error, Object.getOwnPropertyNames(error)));
+                    floatingTypingIndicator.style.display = 'none';
+                    // Display the actual error message
+                    const errorMsg = error.message || 'Sorry, there was an error processing your message. Please try again.';
+                    addMessage('Error: ' + errorMsg, 'ai');
+                })
+                .finally(() => {
+                    floatingInFlight = false;
+                });
+            }
+
+            floatingChatForm.addEventListener('submit', function(e) {
+                e.preventDefault();
+                e.stopPropagation();
+                sendFloatingMessage();
+            });
+            floatingSendButton.addEventListener('click', function(e) {
+                e.preventDefault();
+                sendFloatingMessage();
+            });
+
+            // Add message to chat
+            function addMessage(message, sender, skipHistory = false, metadata = {}) {
+                const messageElement = document.createElement('div');
+                
+                if (sender === 'user') {
+                    messageElement.className = 'floating-user-message';
+                    messageElement.innerHTML = `
+                        <div class="message-bubble">${escapeHtml(message)}</div>
+                    `;
+                } else {
+                    messageElement.className = 'floating-ai-message';
+                    
+                    // Build enhancement status indicators
+                    let enhancementStatus = '';
+                    const statusItems = [];
+                    
+                    if (metadata.rag_used) {
+                        statusItems.push(`<span class="rag-indicator">📚</span> Knowledge Enhanced`);
+                    }
+                    
+                    if (metadata.tickets_used) {
+                        statusItems.push(`<span class="ticket-indicator">🎫</span> Tickets Accessed`);
+                    }
+                    
+                    if (statusItems.length > 0) {
+                        const title = [];
+                        if (metadata.rag_used) title.push(`Knowledge enhanced (${metadata.rag_context_length} chars)`);
+                        if (metadata.tickets_used) title.push(`Tickets accessed (${metadata.tickets_count} tickets)`);
+                        
+                        enhancementStatus = `<div class="enhancement-status" title="${title.join(', ')}">
+                            ${statusItems.join(' • ')}
+                        </div>`;
+                    }
+                    
+                    // Build response time info
+                    let responseTime = '';
+                    if (metadata.response_time_ms) {
+                        responseTime = `<div class="response-time">${metadata.response_time_ms}ms</div>`;
+                    }
+                    
+                    messageElement.innerHTML = `
+                        <div class="agent-avatar">🤖</div>
+                        <div class="message-bubble">
+                            ${escapeHtml(message)}
+                            ${enhancementStatus}
+                            ${responseTime}
+                        </div>
+                    `;
+                }
+
+                floatingChatMessages.appendChild(messageElement);
+                floatingChatMessages.scrollTop = floatingChatMessages.scrollHeight;
+                
+                // Store in message history and localStorage (unless restoring from history)
+                if (!skipHistory) {
+                    const messageData = { message, sender, timestamp: new Date().toISOString() };
+                    messageHistory.push(messageData);
+                    localStorage.setItem('floating_chat_history', JSON.stringify(messageHistory));
+                }
+            }
+
+            // Restore chat history from localStorage
+            function restoreChatHistory() {
+                // Clear current messages except welcome message
+                const welcomeMessage = floatingChatMessages.querySelector('.welcome-message-floating');
+                floatingChatMessages.innerHTML = '';
+                if (welcomeMessage) {
+                    floatingChatMessages.appendChild(welcomeMessage);
+                }
+                
+                // Add stored messages
+                messageHistory.forEach(msgData => {
+                    addMessage(msgData.message, msgData.sender, true);
+                });
+            }
+
+            // Clear chat history
+            function clearChatHistory() {
+                messageHistory = [];
+                localStorage.removeItem('floating_chat_history');
+                localStorage.removeItem('floating_chat_conversation_id');
+                
+                // Reset UI to welcome message only
+                const welcomeMessage = floatingChatMessages.querySelector('.welcome-message-floating');
+                floatingChatMessages.innerHTML = '';
+                if (welcomeMessage) {
+                    floatingChatMessages.appendChild(welcomeMessage);
+                }
+            }
+
+            // Escape HTML function
+            function escapeHtml(text) {
+                const div = document.createElement('div');
+                div.textContent = text;
+                return div.innerHTML;
+            }
+
+            // Enter key to send message (with Shift+Enter for new line)
+            const sendFloatingOnEnter = function(e) {
+                if (e.isComposing) return;
+                if ((e.key === 'Enter' || e.key === 'NumpadEnter') && !e.shiftKey) {
+                    e.preventDefault();
+                    e.stopPropagation();
+                    e.stopImmediatePropagation();
+                    sendFloatingMessage();
+                }
+            };
+            floatingMessageInput.addEventListener('keydown', sendFloatingOnEnter, true);
+            floatingMessageInput.addEventListener('keypress', sendFloatingOnEnter, true);
+
+            // Initialize chat state when page loads
+            initChatResize();
+            initializeChatState();
+
+            // Close chat when clicking outside (optional)
+            document.addEventListener('click', function(e) {
+                if (isChatOpen && !document.getElementById('floating-chat-widget').contains(e.target)) {
+                    // Uncomment the next line if you want clicking outside to close the chat
+                    // toggleChat();
+                }
+            });
+        });
+    </script>
+    
+    {% block extra_scripts %}{% endblock %}
+</body>
+</html>

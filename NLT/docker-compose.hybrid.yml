@@ -1,0 +1,48 @@
+# Hybrid Docker Compose configuration
+# Ollama runs natively, other services in containers
+
+services:
+  # Chatbot web application
+  chatbot:
+    build: .
+    container_name: nlt_chatbot_hybrid
+    restart: unless-stopped
+    network_mode: host
+    volumes:
+      - chatbot_data:/app/data
+      - vector_db_data:/app/data/vector_db
+      - ./templates:/app/templates
+      - ./static:/app/static
+      - ./app.py:/app/app.py
+      - ./scripts:/app/scripts
+      - ./knowledge_base:/app/knowledge_base
+      - ./.selected_model:/app/.selected_model
+    environment:
+      - OLLAMA_BASE_URL=http://localhost:11434
+      - FLASK_ENV=production
+      - FLASK_DEBUG=0
+      - DATABASE_PATH=/app/data/nlt_customer_service.db
+      - TRANSFORMERS_CACHE=/app/data/transformers_cache
+      - HF_HOME=/app/data/huggingface_cache
+      - ANONYMIZED_TELEMETRY=False
+      - CHROMA_TELEMETRY_ENABLED=false
+      - CHROMADB_TELEMETRY_DISABLED=true
+      - POSTHOG_DISABLED=true
+      # AI Security Teaching Level (1-5)
+      - AI_SECURITY_LEVEL=${AI_SECURITY_LEVEL:-1}
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:5000/api/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 10s
+
+networks:
+  chatbot_network:
+    driver: bridge
+
+volumes:
+  chatbot_data:
+    driver: local
+  vector_db_data:
+    driver: local

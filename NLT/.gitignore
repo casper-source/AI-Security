@@ -1,0 +1,21 @@
+# Local instance-specific config - never commit real values
+.env
+.selected_model
+
+# Python
+__pycache__/
+*.pyc
+*.pyo
+.venv/
+venv/
+
+# Runtime data (Docker volumes cover this in normal use; guards against
+# accidental local/non-Docker runs writing here too)
+*.db
+*.sqlite3
+data/
+vector_db/
+
+# OS/editor cruft
+.DS_Store
+Thumbs.db

@@ -1,0 +1,138 @@
+/* ====== Base: clean, white, print-friendly ====== */
+@page { margin: 20mm; }
+
+/* Keep related content together instead of splitting mid-block across pages */
+h1, h2, h3, h4, h5, h6 { page-break-after: avoid; break-after: avoid; }
+ul, ol, li, blockquote, pre, table, tr { page-break-inside: avoid; break-inside: avoid; }
+p { orphans: 3; widows: 3; }
+
+body {
+  font-family: "Roboto", Arial, sans-serif;
+  font-size: 12pt;
+  line-height: 1.65;
+  color: #222;
+  background: #fff;
+  margin: 0; /* print handles margins */
+}
+
+/* Headings */
+h1, h2, h3, h4, h5, h6 {
+  font-weight: 600; color: #111; line-height: 1.25;
+  margin: 1.6em 0 0.6em;
+}
+h1 { font-size: 1.9em; border-bottom: 2px solid #e6e6e6; padding-bottom: .3em; }
+h2 { font-size: 1.45em; border-bottom: 1px solid #eee; padding-bottom: .25em; }
+h3 { font-size: 1.22em; color: #333; }
+
+/* Text & lists */
+p, ul, ol { margin: .9em 0; }
+ul, ol { padding-left: 1.6em; }
+a { color: #0969da; text-decoration: none; }
+a:hover { text-decoration: underline; }
+
+/* Blockquotes as “Notes” */
+blockquote {
+  border-left: 4px solid #2f81f7;
+  background: #f6f8fa;
+  color: #24292f;
+  padding: .9em 1em;
+  margin: 1.2em 0;
+  border-radius: 6px;
+}
+
+/* Inline code */
+code {
+  font-family: "Fira Code", Consolas, ui-monospace, SFMono-Regular, Menlo, monospace;
+  font-size: 0.95em;
+  background: #f6f8fa;
+  color: #24292f;
+  border: 1px solid #e1e4e8;
+  border-radius: 4px;
+  padding: 0.15em 0.35em;
+}
+
+/* Code blocks */
+pre {
+  background: #fafbfc;
+  border: 1px solid #e1e4e8;
+  color: #24292f;
+  padding: 1em;
+  border-radius: 8px;
+  font-family: "Fira Code", Consolas, ui-monospace, SFMono-Regular, Menlo, monospace;
+  font-size: 10pt;
+  overflow-x: auto;
+  margin: 1.2em 0;
+  box-shadow: 0 1px 2px rgba(0,0,0,.04);
+}
+
+/* Tables */
+table { border-collapse: collapse; width: 100%; margin: 1.2em 0; font-size: 10.5pt; }
+th, td { border: 1px solid #dfe2e5; padding: .6em .8em; text-align: left; }
+th { background: #f6f8fa; font-weight: 600; }
+
+/* Rules & images */
+hr { border: 0; border-top: 1px solid #e1e4e8; margin: 2em 0; }
+img { max-width: 100%; display: block; margin: 1em auto; border-radius: 4px; }
+
+/* Page breaks helper */
+div.page-break { page-break-after: always; }
+
+/* ====== Syntax highlighting (GitHub light-ish, override highlight.js) ====== */
+pre code.hljs { background: transparent; padding: 0; }
+
+/* Base text color for highlighted blocks */
+.hljs { color: #24292f; }
+
+/* Keywords, selectors, types */
+.hljs-keyword,
+.hljs-selector-tag,
+.hljs-name,
+.hljs-type,
+.hljs-built_in {
+  color: #cf222e; font-weight: 600;
+}
+
+/* Literals, numbers */
+.hljs-literal,
+.hljs-number {
+  color: #0550ae;
+}
+
+/* Strings */
+.hljs-string,
+.hljs-attr,
+.hljs-template-tag,
+.hljs-template-variable {
+  color: #0a3069;
+}
+
+/* Attributes / property names */
+.hljs-attribute,
+.hljs-attr-name,
+.hljs-property {
+  color: #953800;
+}
+
+/* Comments */
+.hljs-comment,
+.hljs-quote {
+  color: #6e7781; font-style: italic;
+}
+
+/* Functions and titles */
+.hljs-title,
+.hljs-section,
+.hljs-function,
+.hljs-title.function_ {
+  color: #8250df; font-weight: 600;
+}
+
+/* Symbols / bullets / punctuation accents */
+.hljs-symbol,
+.hljs-bullet {
+  color: #1f6feb;
+}
+
+/* Emphasis & strong inside code */
+.hljs-emphasis { font-style: italic; }
+.hljs-strong { font-weight: 700; }

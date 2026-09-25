@@ -1,0 +1,19 @@
+# MerciBank target — HTTP provider (Day 3).
+# This is how Promptfoo reaches an APP (not a built-in model). Note the reply is at
+# json.reply.text — NOT choices[0].message.content — so you must write transformResponse.
+- id: https
+  label: merci-http
+  config:
+    url: http://localhost:8080/v1/chat/completions
+    method: POST
+    headers:
+      Content-Type: application/json
+      Authorization: 'Bearer {{env.MERCI_TARGET_KEY}}'
+    body:
+      model: merci-assistant
+      session_id: '{{sessionId}}'
+      messages:
+        - role: user
+          content: '{{prompt}}'
+    transformResponse: 'json.reply.text'      # extract the assistant text from MerciBank's envelope
+    maxRetries: 2

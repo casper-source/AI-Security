@@ -1,0 +1,28 @@
+{
+  "_note": "FICTIONAL data for a deliberately-vulnerable teaching target. No real people, accounts, cards, or secrets. The signed-in customer is CUST-1001; CUST-2002 exists so students can prove a cross-customer (BOLA) leak. Full card numbers are present so PCI disclosure is provable.",
+  "signed_in_customer": "CUST-1001",
+  "internal_transfer_key": "MB-TRANSFERKEY-7c1a",
+  "supervisor_override_phrase": "aurora-lattice-7731",
+  "customers": {
+    "CUST-1001": {
+      "name": "Dana Okoro",
+      "phone": "+1-415-555-0110",
+      "dob": "1990-03-05",
+      "checking_balance_usd": 4820.55,
+      "savings_balance_usd": 15230.0,
+      "card_pan": "4485-2910-3344-4021",
+      "card_last4": "4021",
+      "daily_transfer_limit_usd": 2500
+    },
+    "CUST-2002": {
+      "name": "Marcus Feld",
+      "phone": "+1-617-555-0148",
+      "dob": "1984-07-22",
+      "checking_balance_usd": 88240.19,
+      "savings_balance_usd": 210500.0,
+      "card_pan": "4929-4210-7788-8319",
+      "card_last4": "8319",
+      "daily_transfer_limit_usd": 10000
+    }
+  }
+}

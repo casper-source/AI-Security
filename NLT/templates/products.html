@@ -1,0 +1,548 @@
+{% extends "base.html" %}
+
+{% block title %}Products - NodeLine Tech{% endblock %}
+
+{% block content %}
+<!-- Page Header -->
+<section class="page-header">
+    <div class="header-container">
+        <div class="header-card">
+            <h1>Our Products</h1>
+            <p>Premium cables and accessories for all your connectivity needs</p>
+        </div>
+    </div>
+</section>
+
+<!-- Products Grid -->
+<section class="products-section">
+    <div class="container">
+        <div class="products-grid" id="products-grid">
+            <!-- USB-C Cables -->
+            <div class="product-card" data-category="usb-c" data-price="24.99">
+                <div class="product-image">🔌</div>
+                <h3>USB-C Premium Cable (100W)</h3>
+                <p class="product-description">100W fast charging, 10Gbps data transfer, 6ft length with braided nylon protection</p>
+                <div class="product-specs">
+                    <span class="spec">100W Power</span>
+                    <span class="spec">10Gbps Speed</span>
+                    <span class="spec">6ft Length</span>
+                </div>
+                <div class="product-price">$24.99</div>
+                <div class="product-rating">⭐⭐⭐⭐⭐ (1,247 reviews)</div>
+                <button class="btn btn-primary" onclick="showProductDetails('usb-c-cable')">More Details</button>
+            </div>
+
+            <div class="product-card" data-category="usb-c" data-price="19.99">
+                <div class="product-image">🔌</div>
+                <h3>USB-C Standard Cable (60W)</h3>
+                <p class="product-description">60W fast charging, 5Gbps data transfer, 3ft compact design with PVC jacket</p>
+                <div class="product-specs">
+                    <span class="spec">60W Power</span>
+                    <span class="spec">5Gbps Speed</span>
+                    <span class="spec">3ft Length</span>
+                </div>
+                <div class="product-price">$19.99</div>
+                <div class="product-rating">⭐⭐⭐⭐⭐ (892 reviews)</div>
+                <button class="btn btn-primary" onclick="showProductDetails('usb-c-standard')">More Details</button>
+            </div>
+
+            <div class="product-card" data-category="usb-c" data-price="16.99">
+                <div class="product-image">🔌</div>
+                <h3>USB-A to USB-C Cable</h3>
+                <p class="product-description">Universal compatibility, 18W fast charging, 6ft braided design</p>
+                <div class="product-specs">
+                    <span class="spec">18W Charging</span>
+                    <span class="spec">5Gbps Speed</span>
+                    <span class="spec">6ft Length</span>
+                </div>
+                <div class="product-price">$16.99</div>
+                <div class="product-rating">⭐⭐⭐⭐⭐ (734 reviews)</div>
+                <button class="btn btn-primary" onclick="showProductDetails('usb-c-to-usb-a')">More Details</button>
+            </div>
+
+            <!-- HDMI Cables -->
+            <div class="product-card" data-category="hdmi" data-price="34.99">
+                <div class="product-image">📺</div>
+                <h3>8K HDMI Cable (Ultra High Speed)</h3>
+                <p class="product-description">8K@60Hz, 4K@120Hz, HDR10+, Dolby Vision, premium 10ft cable with gold-plated connectors</p>
+                <div class="product-specs">
+                    <span class="spec">8K@60Hz</span>
+                    <span class="spec">48 Gbps</span>
+                    <span class="spec">10ft Length</span>
+                </div>
+                <div class="product-price">$34.99</div>
+                <div class="product-rating">⭐⭐⭐⭐⭐ (856 reviews)</div>
+                <button class="btn btn-primary" onclick="showProductDetails('4k-hdmi-cable')">More Details</button>
+            </div>
+
+            <div class="product-card" data-category="hdmi" data-price="24.99">
+                <div class="product-image">📺</div>
+                <h3>4K HDMI Cable (High Speed)</h3>
+                <p class="product-description">4K@60Hz, 1440p@144Hz, HDR10+, ARC audio, 6ft cable with durable PVC jacket</p>
+                <div class="product-specs">
+                    <span class="spec">4K@60Hz</span>
+                    <span class="spec">18 Gbps</span>
+                    <span class="spec">6ft Length</span>
+                </div>
+                <div class="product-price">$24.99</div>
+                <div class="product-rating">⭐⭐⭐⭐⭐ (634 reviews)</div>
+                <button class="btn btn-primary" onclick="showProductDetails('hdmi-standard')">More Details</button>
+            </div>
+
+            <div class="product-card" data-category="hdmi" data-price="18.99">
+                <div class="product-image">📺</div>
+                <h3>HDMI to USB-C Cable</h3>
+                <p class="product-description">Direct connection from laptop to monitor, 4K@60Hz, 6ft cable</p>
+                <div class="product-specs">
+                    <span class="spec">4K@60Hz</span>
+                    <span class="spec">Plug & Play</span>
+                    <span class="spec">6ft Length</span>
+                </div>
+                <div class="product-price">$18.99</div>
+                <div class="product-rating">⭐⭐⭐⭐⭐ (445 reviews)</div>
+                <button class="btn btn-primary" onclick="showProductDetails('hdmi-usb-c-cable')">More Details</button>
+            </div>
+
+            <div class="product-card" data-category="hdmi" data-price="14.99">
+                <div class="product-image">📺</div>
+                <h3>Mini HDMI to HDMI Cable</h3>
+                <p class="product-description">Connect tablets and cameras to displays, 4K@30Hz, 3ft flexible design</p>
+                <div class="product-specs">
+                    <span class="spec">4K@30Hz</span>
+                    <span class="spec">Mini HDMI</span>
+                    <span class="spec">3ft Length</span>
+                </div>
+                <div class="product-price">$14.99</div>
+                <div class="product-rating">⭐⭐⭐⭐⭐ (312 reviews)</div>
+                <button class="btn btn-primary" onclick="showProductDetails('mini-hdmi-cable')">More Details</button>
+            </div>
+
+            <div class="product-card" data-category="hdmi" data-price="14.99">
+                <div class="product-image">📺</div>
+                <h3>Micro HDMI to HDMI Cable</h3>
+                <p class="product-description">Connect action cameras and devices to displays, 4K@30Hz, 3ft ultra-flexible</p>
+                <div class="product-specs">
+                    <span class="spec">4K@30Hz</span>
+                    <span class="spec">Micro HDMI</span>
+                    <span class="spec">3ft Length</span>
+                </div>
+                <div class="product-price">$14.99</div>
+                <div class="product-rating">⭐⭐⭐⭐⭐ (284 reviews)</div>
+                <button class="btn btn-primary" onclick="showProductDetails('micro-hdmi-cable')">More Details</button>
+            </div>
+
+            <!-- Lightning Cables -->
+            <div class="product-card" data-category="lightning" data-price="19.99">
+                <div class="product-image">⚡</div>
+                <h3>Lightning to USB-A Cable (MFi)</h3>
+                <p class="product-description">Apple MFi certified, 2.4A fast charging, 6ft durable cable for iPhone and iPad</p>
+                <div class="product-specs">
+                    <span class="spec">MFi Certified</span>
+                    <span class="spec">2.4A Charging</span>
+                    <span class="spec">6ft Length</span>
+                </div>
+                <div class="product-price">$19.99</div>
+                <div class="product-rating">⭐⭐⭐⭐⭐ (1,542 reviews)</div>
+                <button class="btn btn-primary" onclick="showProductDetails('lightning-cable')">More Details</button>
+            </div>
+
+            <!-- Charging Cables -->
+            <div class="product-card" data-category="charging" data-price="49.99">
+                <div class="product-image">🔋</div>
+                <h3>Multi-Port Charging Hub</h3>
+                <p class="product-description">6 ports, 100W total power, USB-C PD, smart charging technology</p>
+                <div class="product-specs">
+                    <span class="spec">100W Total</span>
+                    <span class="spec">6 Ports</span>
+                    <span class="spec">Smart Charging</span>
+                </div>
+                <div class="product-price">$49.99</div>
+                <div class="product-rating">⭐⭐⭐⭐⭐ (692 reviews)</div>
+                <button class="btn btn-primary" onclick="showProductDetails('charging-hub')">More Details</button>
+            </div>
+
+            <div class="product-card" data-category="charging" data-price="29.99">
+                <div class="product-image">⚡</div>
+                <h3>Wireless Charging Pad</h3>
+                <p class="product-description">15W fast wireless charging, Qi-certified, LED indicator, non-slip design</p>
+                <div class="product-specs">
+                    <span class="spec">15W Fast</span>
+                    <span class="spec">Qi Certified</span>
+                    <span class="spec">LED Status</span>
+                </div>
+                <div class="product-price">$29.99</div>
+                <div class="product-rating">⭐⭐⭐⭐⭐ (445 reviews)</div>
+                <button class="btn btn-primary" onclick="showProductDetails('wireless-charging')">More Details</button>
+            </div>
+
+            <!-- Adapters & Hubs -->
+            <div class="product-card" data-category="adapters" data-price="34.99">
+                <div class="product-image">🔗</div>
+                <h3>USB-C Hub Adapter</h3>
+                <p class="product-description">7-in-1 hub with HDMI, USB-A, SD card, Ethernet, compact aluminum design</p>
+                <div class="product-specs">
+                    <span class="spec">7-in-1 Hub</span>
+                    <span class="spec">4K HDMI</span>
+                    <span class="spec">Gigabit Ethernet</span>
+                </div>
+                <div class="product-price">$34.99</div>
+                <div class="product-rating">⭐⭐⭐⭐⭐ (1,104 reviews)</div>
+                <button class="btn btn-primary" onclick="showProductDetails('usb-c-hub')">More Details</button>
+            </div>
+
+            <div class="product-card" data-category="adapters" data-price="12.99">
+                <div class="product-image">🔄</div>
+                <h3>USB-C to HDMI Adapter</h3>
+                <p class="product-description">4K@30Hz video output, plug and play, ultra-compact design</p>
+                <div class="product-specs">
+                    <span class="spec">4K@30Hz</span>
+                    <span class="spec">Plug & Play</span>
+                    <span class="spec">Compact</span>
+                </div>
+                <div class="product-price">$12.99</div>
+                <div class="product-rating">⭐⭐⭐⭐⭐ (789 reviews)</div>
+                <button class="btn btn-primary" onclick="showProductDetails('usb-c-hdmi-adapter')">More Details</button>
+            </div>
+
+            <!-- Audio Cables -->
+            <div class="product-card" data-category="audio" data-price="16.99">
+                <div class="product-image">🎧</div>
+                <h3>3.5mm Audio Cable</h3>
+                <p class="product-description">Premium gold-plated connectors, tangle-free design, 6ft length</p>
+                <div class="product-specs">
+                    <span class="spec">Gold Plated</span>
+                    <span class="spec">Tangle Free</span>
+                    <span class="spec">6ft Length</span>
+                </div>
+                <div class="product-price">$16.99</div>
+                <div class="product-rating">⭐⭐⭐⭐⭐ (567 reviews)</div>
+                <button class="btn btn-primary" onclick="showProductDetails('audio-cable')">More Details</button>
+            </div>
+
+            <div class="product-card" data-category="audio" data-price="22.99">
+                <div class="product-image">🎵</div>
+                <h3>USB-C to 3.5mm Adapter</h3>
+                <p class="product-description">High-resolution audio, 32-bit DAC, compact aluminum housing</p>
+                <div class="product-specs">
+                    <span class="spec">Hi-Res Audio</span>
+                    <span class="spec">32-bit DAC</span>
+                    <span class="spec">Aluminum</span>
+                </div>
+                <div class="product-price">$22.99</div>
+                <div class="product-rating">⭐⭐⭐⭐⭐ (423 reviews)</div>
+                <button class="btn btn-primary" onclick="showProductDetails('usb-c-audio-adapter')">More Details</button>
+            </div>
+        </div>
+    </div>
+</section>
+
+<!-- Product Support CTA -->
+<section class="product-support-cta">
+    <div class="container">
+                <div class="cta-content">
+            <h2>Need Help Choosing?</h2>
+            <p>Our AI assistant can help you find the perfect cable for your specific needs.</p>
+            <a href="#" class="btn btn-primary btn-large chat-trigger-btn">Get Product Recommendations 💬</a>
+        </div>
+    </div>
+</section>
+
+<!-- Product Details Modal -->
+<div id="product-details-modal" class="modal" style="display: none;">
+    <div class="modal-content">
+        <div class="modal-header">
+            <h2 id="product-modal-title">Product Details</h2>
+            <span class="close-modal" onclick="closeProductModal()">&times;</span>
+        </div>
+        <div class="modal-body">
+            <div id="product-modal-content" class="product-details-content">
+                <div class="loading">Loading product specifications...</div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<style>
+/* Wider grid + guaranteed 4 columns for the product catalog */
+.products-section .container {
+    max-width: 1700px !important;
+}
+
+.products-section .products-grid {
+    grid-template-columns: repeat(4, 1fr) !important;
+}
+
+@media (max-width: 1200px) {
+    .products-section .products-grid {
+        grid-template-columns: repeat(3, 1fr) !important;
+    }
+}
+
+@media (max-width: 900px) {
+    .products-section .products-grid {
+        grid-template-columns: repeat(2, 1fr) !important;
+    }
+}
+
+@media (max-width: 480px) {
+    .products-section .products-grid {
+        grid-template-columns: 1fr !important;
+    }
+}
+
+/* Larger, dark-themed product details popup */
+#product-details-modal .modal-content {
+    background: #14171f !important;
+    color: #e8eaed !important;
+    max-width: 900px !important;
+    width: 92% !important;
+    max-height: 85vh !important;
+    border: 1px solid #2a2e37 !important;
+    border-radius: 16px !important;
+    box-shadow: 0 24px 60px rgba(0, 0, 0, 0.5) !important;
+}
+
+#product-details-modal .modal-header {
+    border-bottom-color: #2a2e37 !important;
+}
+
+#product-details-modal #product-modal-title {
+    color: #e8eaed !important;
+}
+
+@media (max-width: 768px) {
+    #product-details-modal .modal-content {
+        max-width: 94% !important;
+        width: 94% !important;
+    }
+}
+
+.product-details-content {
+    max-height: 70vh;
+    overflow-y: auto;
+    overflow-x: hidden;
+    word-wrap: break-word;
+    line-height: 1.6;
+    scrollbar-width: thin;
+    scrollbar-color: #3ea6ff #1a1d24;
+}
+
+.product-details-content::-webkit-scrollbar {
+    width: 8px;
+}
+
+.product-details-content::-webkit-scrollbar-track {
+    background: #1a1d24;
+    border-radius: 8px;
+}
+
+.product-details-content::-webkit-scrollbar-thumb {
+    background: #3ea6ff;
+    border-radius: 8px;
+}
+
+.product-details-content::-webkit-scrollbar-thumb:hover {
+    background: #22d3ee;
+}
+
+.product-details-content h3 {
+    color: #dfe3ea;
+    margin-top: 20px;
+    margin-bottom: 10px;
+}
+
+.product-details-content h4 {
+    color: #dfe3ea;
+    margin-top: 15px;
+    margin-bottom: 8px;
+}
+
+.product-details-content h5 {
+    color: #98a2b5;
+    margin-top: 12px;
+    margin-bottom: 6px;
+}
+
+.product-details-content p {
+    margin-bottom: 10px;
+}
+
+.product-details-content ul {
+    margin: 10px 0;
+    padding-left: 20px;
+}
+
+.product-details-content li {
+    margin: 5px 0;
+}
+
+.product-details-content strong {
+    color: #1f8fe6;
+}
+
+.loading {
+    text-align: center;
+    padding: 40px;
+    color: #9aa4b0;
+}
+
+.error {
+    text-align: center;
+    padding: 40px;
+    color: #ef4444;
+}
+
+.specs-content {
+    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+}
+</style>
+{% endblock %}
+
+{% block extra_scripts %}
+<script>
+    // Product filtering functionality
+    document.addEventListener('DOMContentLoaded', function() {
+        const categoryFilter = document.getElementById('category-filter');
+        const priceFilter = document.getElementById('price-filter');
+        const productsGrid = document.getElementById('products-grid');
+        const products = Array.from(productsGrid.querySelectorAll('.product-card'));
+
+        function filterProducts() {
+            const selectedCategory = categoryFilter.value;
+            const selectedPriceRange = priceFilter.value;
+            
+            products.forEach(product => {
+                const category = product.dataset.category;
+                const price = parseFloat(product.dataset.price);
+                
+                let showProduct = true;
+                
+                // Category filter
+                if (selectedCategory && category !== selectedCategory) {
+                    showProduct = false;
+                }
+                
+                // Price filter
+                if (selectedPriceRange) {
+                    const [min, max] = selectedPriceRange.split('-').map(p => p === '+' ? Infinity : parseFloat(p));
+                    if (selectedPriceRange.includes('+')) {
+                        if (price < min) showProduct = false;
+                    } else {
+                        if (price < min || price > max) showProduct = false;
+                    }
+                }
+                
+                product.style.display = showProduct ? 'block' : 'none';
+            });
+        }
+
+        // Event listeners
+        categoryFilter.addEventListener('change', filterProducts);
+        priceFilter.addEventListener('change', filterProducts);
+    });
+
+    // Product details functionality
+    async function showProductDetails(productName) {
+        const modal = document.getElementById('product-details-modal');
+        const title = document.getElementById('product-modal-title');
+        const content = document.getElementById('product-modal-content');
+        
+        // Show modal with loading state
+        modal.style.display = 'flex';
+        title.textContent = 'Loading Product Details...';
+        content.innerHTML = '<div class="loading">Loading product specifications...</div>';
+        
+        try {
+            const response = await fetch(`/api/product/${productName}`);
+            const data = await response.json();
+            
+            if (data.success) {
+                // Set product title
+                const productTitles = {
+                    'usb-c-cable': 'USB-C to USB-C Cable',
+                    'usb-c-to-usb-a': 'USB-C to USB-A Cable',
+                    '4k-hdmi-cable': '4K HDMI Cable',
+                    'hdmi-usb-c-cable': 'HDMI to USB-C Cable',
+                    'charging-hub': 'Multi-Port Charging Hub',
+                    'wireless-charging': 'Wireless Charging Pad',
+                    'usb-c-hub': 'USB-C Hub Adapter',
+                    'usb-c-hdmi-adapter': 'USB-C to HDMI Adapter',
+                    'audio-cable': '3.5mm Audio Cable',
+                    'usb-c-audio-adapter': 'USB-C to 3.5mm Adapter'
+                };
+                
+                title.textContent = productTitles[productName] || 'Product Details';
+                
+                // Format and display specifications
+                const specs = data.specifications;
+                const formattedSpecs = formatProductSpecs(specs);
+                content.innerHTML = formattedSpecs;
+            } else {
+                content.innerHTML = '<div class="error">Failed to load product specifications. Please try again.</div>';
+            }
+        } catch (error) {
+            console.error('Error fetching product details:', error);
+            content.innerHTML = '<div class="error">Failed to load product specifications. Please try again.</div>';
+        }
+    }
+
+    function escapeHtml(text) {
+        return text.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+    }
+
+    function inlineFormat(text) {
+        return escapeHtml(text).replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>');
+    }
+
+    function formatProductSpecs(specs) {
+        // Parse line-by-line so headers and lists are recognized before
+        // newlines get collapsed into <br>/<p> tags.
+        const lines = specs.split('\n');
+        let html = '';
+        let inList = false;
+
+        for (const rawLine of lines) {
+            const line = rawLine.trim();
+
+            if (line === '') {
+                if (inList) { html += '</ul>'; inList = false; }
+                continue;
+            }
+
+            const headerMatch = line.match(/^(#{1,4})\s+(.*)$/);
+            if (headerMatch) {
+                if (inList) { html += '</ul>'; inList = false; }
+                const level = Math.min(headerMatch[1].length + 2, 6);
+                html += `<h${level}>${inlineFormat(headerMatch[2])}</h${level}>`;
+                continue;
+            }
+
+            const listMatch = line.match(/^-\s+(.*)$/);
+            if (listMatch) {
+                if (!inList) { html += '<ul>'; inList = true; }
+                html += `<li>${inlineFormat(listMatch[1])}</li>`;
+                continue;
+            }
+
+            if (inList) { html += '</ul>'; inList = false; }
+            html += `<p>${inlineFormat(line)}</p>`;
+        }
+        if (inList) html += '</ul>';
+
+        return `<div class="specs-content">${html}</div>`;
+    }
+
+    function closeProductModal() {
+        const modal = document.getElementById('product-details-modal');
+        modal.style.display = 'none';
+    }
+
+    // Close modal when clicking outside
+    document.addEventListener('click', function(e) {
+        const modal = document.getElementById('product-details-modal');
+        if (e.target === modal) {
+            closeProductModal();
+        }
+    });
+</script>
+{% endblock %}

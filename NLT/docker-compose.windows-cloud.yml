@@ -1,0 +1,43 @@
+# Local Windows setup for the "cloud hybrid" mode: Ollama runs remotely
+# (e.g. a RunPod GPU pod), reached over its public HTTPS proxy URL.
+# Uses normal port mapping instead of network_mode: host, which doesn't
+# bridge reliably on Docker Desktop for Windows.
+
+services:
+  chatbot:
+    build: .
+    container_name: nlt_chatbot_cloud_windows
+    restart: unless-stopped
+    ports:
+      - "5000:5000"
+    environment:
+      - OLLAMA_BASE_URL=${OLLAMA_CLOUD_URL:?Set OLLAMA_CLOUD_URL in .env to your RunPod HTTP Service URL}
+      - FLASK_ENV=production
+      - FLASK_DEBUG=0
+      - DATABASE_PATH=/app/data/nlt_customer_service.db
+      - TRANSFORMERS_CACHE=/app/data/transformers_cache
+      - HF_HOME=/app/data/huggingface_cache
+      - ANONYMIZED_TELEMETRY=False
+      - CHROMA_TELEMETRY_ENABLED=false
+      - CHROMADB_TELEMETRY_DISABLED=true
+      - POSTHOG_DISABLED=true
+      - AI_SECURITY_LEVEL=${AI_SECURITY_LEVEL:-1}
+    volumes:
+      - chatbot_data:/app/data
+      - vector_db_data:/app/data/vector_db
+      - ./templates:/app/templates
+      - ./static:/app/static
+      - ./app.py:/app/app.py
+      - ./scripts:/app/scripts
+      - ./knowledge_base:/app/knowledge_base
+      - ./.selected_model:/app/.selected_model
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:5000/api/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 10s
+
+volumes:
+  chatbot_data:
+  vector_db_data:

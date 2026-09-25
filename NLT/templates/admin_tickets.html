@@ -1,0 +1,888 @@
+{% extends "base.html" %}
+
+{% block title %}Admin - Ticket Management - NodeLine Tech{% endblock %}
+
+{% block description %}Administrative interface for managing customer support tickets and monitoring system performance.{% endblock %}
+
+{% block content %}
+<div class="admin-container">
+    <div class="page-header">
+        <h1 class="page-title">Admin - Ticket Management</h1>
+        <p class="page-subtitle">Manage customer support tickets and monitor system performance</p>
+    </div>
+
+    <!-- Statistics Dashboard -->
+    <div class="stats-grid">
+        <div class="stat-card">
+            <div class="stat-icon">📊</div>
+            <div class="stat-content">
+                <h3 id="total-tickets">-</h3>
+                <p>Total Tickets</p>
+            </div>
+        </div>
+        
+        <div class="stat-card">
+            <div class="stat-icon">🟢</div>
+            <div class="stat-content">
+                <h3 id="open-tickets">-</h3>
+                <p>Open Tickets</p>
+            </div>
+        </div>
+        
+        <div class="stat-card">
+            <div class="stat-icon">🔵</div>
+            <div class="stat-content">
+                <h3 id="in-progress-tickets">-</h3>
+                <p>In Progress</p>
+            </div>
+        </div>
+        
+        <div class="stat-card">
+            <div class="stat-icon">✅</div>
+            <div class="stat-content">
+                <h3 id="resolved-tickets">-</h3>
+                <p>Resolved</p>
+            </div>
+        </div>
+    </div>
+
+    <!-- Filters and Controls -->
+    <div class="glass-card filters-section">
+        <div class="filters-header">
+            <h3>Ticket Filters</h3>
+            <button class="btn btn-primary" onclick="refreshTickets()">Refresh</button>
+        </div>
+        
+        <div class="filters-row">
+            <div class="filter-group">
+                <label for="status-filter">Status:</label>
+                <select id="status-filter" onchange="applyFilters()">
+                    <option value="">All Status</option>
+                    <option value="open">Open</option>
+                    <option value="in_progress">In Progress</option>
+                    <option value="resolved">Resolved</option>
+                    <option value="closed">Closed</option>
+                </select>
+            </div>
+            
+            <div class="filter-group">
+                <label for="priority-filter">Priority:</label>
+                <select id="priority-filter" onchange="applyFilters()">
+                    <option value="">All Priority</option>
+                    <option value="low">Low</option>
+                    <option value="medium">Medium</option>
+                    <option value="high">High</option>
+                    <option value="urgent">Urgent</option>
+                </select>
+            </div>
+            
+            <div class="filter-group">
+                <label for="category-filter">Category:</label>
+                <select id="category-filter" onchange="applyFilters()">
+                    <option value="">All Categories</option>
+                </select>
+            </div>
+        </div>
+    </div>
+
+    <!-- Tickets Table -->
+    <div class="glass-card tickets-table-section">
+        <div class="table-header">
+            <h3>All Tickets</h3>
+            <div class="pagination-info">
+                <span id="pagination-text">Loading...</span>
+            </div>
+        </div>
+        
+        <div id="tickets-loading" class="loading-state">
+            <div class="spinner"></div>
+            <p>Loading tickets...</p>
+        </div>
+        
+        <div id="tickets-table-container" style="display: none;">
+            <table id="tickets-table" class="admin-table">
+                <thead>
+                    <tr>
+                        <th>Ticket #</th>
+                        <th>Customer</th>
+                        <th>Subject</th>
+                        <th>Category</th>
+                        <th>Priority</th>
+                        <th>Status</th>
+                        <th>Assigned To</th>
+                        <th>Created</th>
+                        <th>Actions</th>
+                    </tr>
+                </thead>
+                <tbody id="tickets-table-body">
+                </tbody>
+            </table>
+        </div>
+        
+        <!-- Pagination -->
+        <div class="pagination-container">
+            <button id="prev-page" class="btn btn-outline" onclick="changePage(-1)" disabled>Previous</button>
+            <span id="page-info">Page 1 of 1</span>
+            <button id="next-page" class="btn btn-outline" onclick="changePage(1)" disabled>Next</button>
+        </div>
+    </div>
+</div>
+
+<!-- Ticket Detail Modal -->
+<div id="ticket-detail-modal" class="modal" style="display: none;">
+    <div class="modal-content large-modal glass-card">
+        <div class="modal-header">
+            <h3 id="modal-ticket-title">Ticket Details</h3>
+            <button class="modal-close" onclick="closeTicketModal()">&times;</button>
+        </div>
+        
+        <div class="modal-body">
+            <div id="ticket-detail-content"></div>
+            
+            <!-- Admin Actions -->
+            <div class="admin-actions">
+                <h4>Admin Actions</h4>
+                
+                <div class="action-row">
+                    <div class="action-group">
+                        <label for="assign-agent">Assign to Agent:</label>
+                        <input type="text" id="assign-agent" placeholder="Agent name">
+                        <button class="btn btn-secondary" onclick="assignTicket()">Assign</button>
+                    </div>
+                    
+                    <div class="action-group">
+                        <label for="update-status">Update Status:</label>
+                        <select id="update-status">
+                            <option value="open">Open</option>
+                            <option value="in_progress">In Progress</option>
+                            <option value="resolved">Resolved</option>
+                            <option value="closed">Closed</option>
+                        </select>
+                        <button class="btn btn-secondary" onclick="updateStatus()">Update</button>
+                    </div>
+                </div>
+                
+                <div class="admin-reply-section">
+                    <h5>Add Admin Reply</h5>
+                    <textarea id="admin-reply" placeholder="Type your reply..." rows="3"></textarea>
+                    <div class="reply-options">
+                        <label>
+                            <input type="checkbox" id="internal-note"> Internal note (not visible to customer)
+                        </label>
+                        <button class="btn btn-primary" onclick="addAdminReply()">Send Reply</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<style>
+.admin-container {
+    max-width: 1400px;
+    margin: 0 auto;
+    padding: 2rem;
+}
+
+.page-header {
+    text-align: center;
+    margin-bottom: 3rem;
+}
+
+.page-title {
+    font-size: 2.5rem;
+    font-weight: 700;
+    color: white;
+    text-shadow: 0 2px 10px rgba(0,0,0,0.3);
+    margin-bottom: 0.5rem;
+}
+
+.page-subtitle {
+    font-size: 1.1rem;
+    color: rgba(255,255,255,0.9);
+    font-weight: 300;
+}
+
+.stats-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+    gap: 1.5rem;
+    margin-bottom: 2rem;
+}
+
+.stat-card {
+    background: rgba(255, 255, 255, 0.15);
+    backdrop-filter: blur(25px);
+    border-radius: 15px;
+    border: 1px solid rgba(255, 255, 255, 0.2);
+    padding: 1.5rem;
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+    transition: transform 0.3s ease;
+}
+
+.stat-card:hover {
+    transform: translateY(-2px);
+}
+
+.stat-icon {
+    font-size: 2rem;
+}
+
+.stat-content h3 {
+    font-size: 2rem;
+    font-weight: 700;
+    color: white;
+    margin: 0;
+}
+
+.stat-content p {
+    color: rgba(255,255,255,0.8);
+    margin: 0;
+    font-size: 0.9rem;
+}
+
+.glass-card {
+    background: rgba(255, 255, 255, 0.15);
+    backdrop-filter: blur(25px);
+    -webkit-backdrop-filter: blur(25px);
+    border-radius: 20px;
+    border: 1px solid rgba(255, 255, 255, 0.2);
+    padding: 2rem;
+    margin-bottom: 2rem;
+    box-shadow: 0 8px 32px rgba(31, 38, 135, 0.37);
+}
+
+.filters-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 1.5rem;
+}
+
+.filters-header h3 {
+    color: white;
+    margin: 0;
+}
+
+.filters-row {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+    gap: 1rem;
+}
+
+.filter-group label {
+    display: block;
+    color: rgba(255,255,255,0.9);
+    margin-bottom: 0.5rem;
+    font-weight: 500;
+}
+
+.filter-group select,
+.filter-group input {
+    width: 100%;
+    padding: 0.5rem;
+    border: 1px solid rgba(255,255,255,0.3);
+    border-radius: 8px;
+    background: rgba(255,255,255,0.1);
+    color: white;
+    font-size: 0.9rem;
+}
+
+.table-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 1.5rem;
+}
+
+.table-header h3 {
+    color: white;
+    margin: 0;
+}
+
+.admin-table {
+    width: 100%;
+    border-collapse: collapse;
+    background: rgba(255,255,255,0.1);
+    border-radius: 10px;
+    overflow: hidden;
+}
+
+.admin-table th,
+.admin-table td {
+    padding: 1rem;
+    text-align: left;
+    border-bottom: 1px solid rgba(255,255,255,0.1);
+}
+
+.admin-table th {
+    background: rgba(255,255,255,0.2);
+    color: white;
+    font-weight: 600;
+}
+
+.admin-table td {
+    color: rgba(255,255,255,0.9);
+}
+
+.admin-table tr:hover {
+    background: rgba(255,255,255,0.1);
+}
+
+.ticket-status-badge {
+    padding: 0.25rem 0.75rem;
+    border-radius: 20px;
+    font-size: 0.8rem;
+    font-weight: 500;
+    text-transform: uppercase;
+}
+
+.priority-badge {
+    padding: 0.25rem 0.5rem;
+    border-radius: 15px;
+    font-size: 0.75rem;
+    font-weight: 500;
+    text-transform: uppercase;
+}
+
+.priority-low { background: #64748b; color: white; }
+.priority-medium { background: #3ea6ff; color: white; }
+.priority-high { background: #fbbf24; color: white; }
+.priority-urgent { background: #ef4444; color: white; }
+
+.btn {
+    padding: 0.5rem 1rem;
+    border: none;
+    border-radius: 8px;
+    font-weight: 600;
+    text-decoration: none;
+    display: inline-block;
+    transition: all 0.3s ease;
+    cursor: pointer;
+    font-size: 0.9rem;
+}
+
+.btn-primary {
+    background: linear-gradient(135deg, #3ea6ff 0%, #22d3ee 100%);
+    color: white;
+    box-shadow: 0 4px 15px rgba(62, 166, 255, 0.4);
+}
+
+.btn-secondary {
+    background: rgba(255,255,255,0.2);
+    color: white;
+    border: 1px solid rgba(255,255,255,0.3);
+}
+
+.btn-outline {
+    background: transparent;
+    color: white;
+    border: 1px solid rgba(255,255,255,0.3);
+}
+
+.btn:hover {
+    transform: translateY(-1px);
+}
+
+.btn:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+    transform: none;
+}
+
+.pagination-container {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-top: 1rem;
+}
+
+.loading-state {
+    text-align: center;
+    padding: 2rem;
+    color: rgba(255,255,255,0.8);
+}
+
+.spinner {
+    border: 3px solid rgba(255,255,255,0.3);
+    border-top: 3px solid white;
+    border-radius: 50%;
+    width: 40px;
+    height: 40px;
+    animation: spin 1s linear infinite;
+    margin: 0 auto 1rem;
+}
+
+@keyframes spin {
+    0% { transform: rotate(0deg); }
+    100% { transform: rotate(360deg); }
+}
+
+.modal {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: rgba(0,0,0,0.8);
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    z-index: 2000;
+}
+
+.large-modal {
+    max-width: 900px;
+    width: 95%;
+    max-height: 90vh;
+    overflow-y: auto;
+}
+
+.modal-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 1.5rem;
+}
+
+.modal-close {
+    background: none;
+    border: none;
+    color: white;
+    font-size: 2rem;
+    cursor: pointer;
+    opacity: 0.7;
+    transition: opacity 0.3s ease;
+}
+
+.modal-close:hover {
+    opacity: 1;
+}
+
+.admin-actions {
+    margin-top: 2rem;
+    padding-top: 2rem;
+    border-top: 1px solid rgba(255,255,255,0.2);
+}
+
+.admin-actions h4,
+.admin-actions h5 {
+    color: white;
+    margin-bottom: 1rem;
+}
+
+.action-row {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 2rem;
+    margin-bottom: 2rem;
+}
+
+.action-group {
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+}
+
+.action-group label {
+    color: rgba(255,255,255,0.9);
+    font-weight: 500;
+}
+
+.action-group input,
+.action-group select {
+    padding: 0.5rem;
+    border: 1px solid rgba(255,255,255,0.3);
+    border-radius: 8px;
+    background: rgba(255,255,255,0.1);
+    color: white;
+}
+
+.admin-reply-section textarea {
+    width: 100%;
+    padding: 0.75rem;
+    border: 1px solid rgba(255,255,255,0.3);
+    border-radius: 8px;
+    background: rgba(255,255,255,0.1);
+    color: white;
+    resize: vertical;
+    margin-bottom: 1rem;
+}
+
+.reply-options {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.reply-options label {
+    color: rgba(255,255,255,0.8);
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+}
+
+@media (max-width: 768px) {
+    .stats-grid {
+        grid-template-columns: 1fr;
+    }
+    
+    .filters-row {
+        grid-template-columns: 1fr;
+    }
+    
+    .action-row {
+        grid-template-columns: 1fr;
+    }
+    
+    .table-header {
+        flex-direction: column;
+        gap: 1rem;
+        text-align: center;
+    }
+    
+    .admin-table {
+        font-size: 0.85rem;
+    }
+    
+    .admin-table th,
+    .admin-table td {
+        padding: 0.5rem;
+    }
+}
+</style>
+
+<script>
+// Admin ticket management functionality
+let currentPage = 1;
+let totalPages = 1;
+let currentFilters = {};
+let currentTicketId = null;
+
+// Initialize page
+document.addEventListener('DOMContentLoaded', function() {
+    loadStats();
+    loadCategories();
+    loadTickets();
+});
+
+function loadStats() {
+    fetch('/api/admin/tickets/stats')
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                const stats = data.stats.overall;
+                document.getElementById('total-tickets').textContent = stats.total_tickets;
+                document.getElementById('open-tickets').textContent = stats.open_tickets;
+                document.getElementById('in-progress-tickets').textContent = stats.in_progress_tickets;
+                document.getElementById('resolved-tickets').textContent = stats.resolved_tickets;
+            }
+        })
+        .catch(error => console.error('Error loading stats:', error));
+}
+
+function loadCategories() {
+    fetch('/api/tickets/categories')
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                const categorySelect = document.getElementById('category-filter');
+                data.categories.forEach(category => {
+                    const option = document.createElement('option');
+                    option.value = category.name;
+                    option.textContent = category.name;
+                    categorySelect.appendChild(option);
+                });
+            }
+        })
+        .catch(error => console.error('Failed to load categories:', error));
+}
+
+function loadTickets(page = 1) {
+    currentPage = page;
+    document.getElementById('tickets-loading').style.display = 'block';
+    document.getElementById('tickets-table-container').style.display = 'none';
+    
+    // Build query parameters
+    const params = new URLSearchParams({
+        page: page,
+        limit: 20,
+        ...currentFilters
+    });
+    
+    fetch(`/api/admin/tickets?${params}`)
+        .then(response => response.json())
+        .then(data => {
+            document.getElementById('tickets-loading').style.display = 'none';
+            
+            if (data.success) {
+                displayTickets(data.tickets);
+                updatePagination(data.pagination);
+                document.getElementById('tickets-table-container').style.display = 'block';
+            } else {
+                console.error('Failed to load tickets:', data.error);
+            }
+        })
+        .catch(error => {
+            document.getElementById('tickets-loading').style.display = 'none';
+            console.error('Error loading tickets:', error);
+        });
+}
+
+function displayTickets(tickets) {
+    const tbody = document.getElementById('tickets-table-body');
+    tbody.innerHTML = '';
+    
+    tickets.forEach(ticket => {
+        const row = createTicketRow(ticket);
+        tbody.appendChild(row);
+    });
+}
+
+function createTicketRow(ticket) {
+    const tr = document.createElement('tr');
+    const createdDate = new Date(ticket.created_at).toLocaleDateString();
+    
+    tr.innerHTML = `
+        <td><strong>${ticket.ticket_number}</strong></td>
+        <td>${ticket.first_name} ${ticket.last_name}<br><small>${ticket.email}</small></td>
+        <td>${ticket.subject}</td>
+        <td>${ticket.category}</td>
+        <td><span class="priority-badge priority-${ticket.priority}">${ticket.priority}</span></td>
+        <td><span class="ticket-status-badge status-${ticket.status}">${ticket.status.replace('_', ' ')}</span></td>
+        <td>${ticket.assigned_agent || 'Unassigned'}</td>
+        <td>${createdDate}</td>
+        <td>
+            <button class="btn btn-secondary" onclick="viewTicket('${ticket.ticket_number}')">View</button>
+        </td>
+    `;
+    
+    return tr;
+}
+
+function updatePagination(pagination) {
+    totalPages = pagination.pages;
+    document.getElementById('page-info').textContent = `Page ${pagination.page} of ${pagination.pages}`;
+    document.getElementById('pagination-text').textContent = 
+        `Showing ${((pagination.page - 1) * pagination.limit) + 1}-${Math.min(pagination.page * pagination.limit, pagination.total)} of ${pagination.total} tickets`;
+    
+    document.getElementById('prev-page').disabled = pagination.page <= 1;
+    document.getElementById('next-page').disabled = pagination.page >= pagination.pages;
+}
+
+function changePage(direction) {
+    const newPage = currentPage + direction;
+    if (newPage >= 1 && newPage <= totalPages) {
+        loadTickets(newPage);
+    }
+}
+
+function applyFilters() {
+    currentFilters = {
+        status: document.getElementById('status-filter').value,
+        priority: document.getElementById('priority-filter').value,
+        category: document.getElementById('category-filter').value
+    };
+    
+    // Remove empty filters
+    Object.keys(currentFilters).forEach(key => {
+        if (!currentFilters[key]) {
+            delete currentFilters[key];
+        }
+    });
+    
+    loadTickets(1); // Reset to page 1 when filtering
+}
+
+function refreshTickets() {
+    loadStats();
+    loadTickets(currentPage);
+}
+
+function viewTicket(ticketNumber) {
+    fetch(`/api/tickets/${ticketNumber}`)
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                showTicketDetails(data.ticket, data.updates);
+                currentTicketId = data.ticket.id;
+                document.getElementById('ticket-detail-modal').style.display = 'flex';
+            } else {
+                alert('Failed to load ticket details: ' + data.error);
+            }
+        })
+        .catch(error => {
+            console.error('Error loading ticket:', error);
+            alert('Error loading ticket details.');
+        });
+}
+
+function showTicketDetails(ticket, updates) {
+    const container = document.getElementById('ticket-detail-content');
+    const createdDate = new Date(ticket.created_at).toLocaleDateString();
+    
+    let updatesHtml = '';
+    if (updates && updates.length > 0) {
+        updatesHtml = '<h4 style="color: white; margin-top: 2rem;">Updates:</h4>';
+        updates.forEach(update => {
+            const updateDate = new Date(update.created_at).toLocaleDateString();
+            const isInternal = update.is_internal ? ' (Internal)' : '';
+            updatesHtml += `
+                <div style="background: rgba(255,255,255,0.1); padding: 1rem; margin: 0.5rem 0; border-radius: 8px;">
+                    <div style="color: rgba(255,255,255,0.8); font-size: 0.9rem; margin-bottom: 0.5rem;">
+                        ${updateDate} - ${update.update_type}${isInternal}
+                    </div>
+                    <div style="color: white;">${update.message}</div>
+                </div>
+            `;
+        });
+    }
+    
+    container.innerHTML = `
+        <div style="color: white;">
+            <h4>Ticket ${ticket.ticket_number}</h4>
+            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 2rem; margin: 1rem 0;">
+                <div>
+                    <p><strong>Customer:</strong> ${ticket.first_name} ${ticket.last_name}</p>
+                    <p><strong>Email:</strong> ${ticket.email}</p>
+                    <p><strong>Status:</strong> <span class="ticket-status-badge status-${ticket.status}">${ticket.status.replace('_', ' ')}</span></p>
+                    <p><strong>Priority:</strong> <span class="priority-badge priority-${ticket.priority}">${ticket.priority}</span></p>
+                </div>
+                <div>
+                    <p><strong>Category:</strong> ${ticket.category}</p>
+                    <p><strong>Assigned Agent:</strong> ${ticket.assigned_agent || 'Unassigned'}</p>
+                    <p><strong>Created:</strong> ${createdDate}</p>
+                    <p><strong>Escalation Level:</strong> ${ticket.escalation_level || 0}</p>
+                </div>
+            </div>
+            <h5 style="margin-top: 1.5rem;">Subject:</h5>
+            <p>${ticket.subject}</p>
+            <h5 style="margin-top: 1.5rem;">Description:</h5>
+            <p style="white-space: pre-wrap;">${ticket.description}</p>
+            ${updatesHtml}
+        </div>
+    `;
+    
+    // Set current values in form fields
+    document.getElementById('assign-agent').value = ticket.assigned_agent || '';
+    document.getElementById('update-status').value = ticket.status;
+    
+    document.getElementById('modal-ticket-title').textContent = `Ticket ${ticket.ticket_number}`;
+}
+
+function assignTicket() {
+    if (!currentTicketId) return;
+    
+    const agentName = document.getElementById('assign-agent').value.trim();
+    if (!agentName) {
+        alert('Please enter an agent name');
+        return;
+    }
+    
+    fetch(`/api/admin/tickets/${currentTicketId}/assign`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ assigned_agent: agentName })
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            alert('Ticket assigned successfully!');
+            refreshTickets();
+            closeTicketModal();
+        } else {
+            alert('Failed to assign ticket: ' + data.error);
+        }
+    })
+    .catch(error => {
+        console.error('Error assigning ticket:', error);
+        alert('Error assigning ticket. Please try again.');
+    });
+}
+
+function updateStatus() {
+    if (!currentTicketId) return;
+    
+    const newStatus = document.getElementById('update-status').value;
+    const resolutionNotes = newStatus === 'resolved' ? 
+        prompt('Resolution notes (optional):') || '' : '';
+    
+    fetch(`/api/admin/tickets/${currentTicketId}/status`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ 
+            status: newStatus,
+            resolution_notes: resolutionNotes
+        })
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            alert('Status updated successfully!');
+            refreshTickets();
+            closeTicketModal();
+        } else {
+            alert('Failed to update status: ' + data.error);
+        }
+    })
+    .catch(error => {
+        console.error('Error updating status:', error);
+        alert('Error updating status. Please try again.');
+    });
+}
+
+function addAdminReply() {
+    if (!currentTicketId) return;
+    
+    const message = document.getElementById('admin-reply').value.trim();
+    const isInternal = document.getElementById('internal-note').checked;
+    
+    if (!message) {
+        alert('Please enter a message');
+        return;
+    }
+    
+    fetch(`/api/admin/tickets/${currentTicketId}/reply`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ 
+            message: message,
+            is_internal: isInternal
+        })
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            alert('Reply added successfully!');
+            document.getElementById('admin-reply').value = '';
+            document.getElementById('internal-note').checked = false;
+            // Reload ticket details
+            const ticketNumber = document.getElementById('modal-ticket-title').textContent.replace('Ticket ', '');
+            viewTicket(ticketNumber);
+        } else {
+            alert('Failed to add reply: ' + data.error);
+        }
+    })
+    .catch(error => {
+        console.error('Error adding reply:', error);
+        alert('Error adding reply. Please try again.');
+    });
+}
+
+function closeTicketModal() {
+    document.getElementById('ticket-detail-modal').style.display = 'none';
+    document.getElementById('admin-reply').value = '';
+    document.getElementById('internal-note').checked = false;
+    currentTicketId = null;
+}
+
+// Close modal on outside click
+document.getElementById('ticket-detail-modal').addEventListener('click', function(e) {
+    if (e.target === this) {
+        closeTicketModal();
+    }
+});
+</script>
+{% endblock %}

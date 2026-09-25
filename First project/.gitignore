@@ -6,25 +6,19 @@
 *.pem
 secrets.yaml
 
-# --- Local tool state & outputs ---
+# --- promptfoo local state & outputs ---
 .promptfoo/
-node_modules/
-__pycache__/
-*.pyc
-.venv/
-venv/
-*.db
-*.db-shm
-*.db-wal
 output.json
 output.csv
 output.yaml
 output.html
 promptfoo-errors.log
-*.log
+*.db
+*.db-shm
+*.db-wal
 
-# Nested clone metadata (never commit another repo's .git)
-.git.nested.bak/
+# --- Local junk ---
+node_modules/
 
 # --- OS / editor ---
 .DS_Store

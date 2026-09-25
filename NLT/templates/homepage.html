@@ -1,0 +1,383 @@
+{% extends "base.html" %}
+
+{% block title %}NodeLine Tech - Premium Cables & Tech Accessories{% endblock %}
+
+{% block content %}
+<!-- Hero Section -->
+<section class="hero">
+    <div class="hero-container">
+        <div class="hero-content">
+            <h1 class="hero-title">Premium Cables for Every Connection</h1>
+            <p class="hero-subtitle">From USB-C to HDMI, we've got the high-quality cables and accessories you need. Fast shipping, lifetime warranty, and 24/7 support.</p>
+            <div class="hero-actions">
+                <a href="{{ url_for('products') }}" class="btn btn-primary btn-large">Shop Now</a>
+                <a href="#" class="btn btn-outline btn-large chat-trigger-btn">Get Help 💬</a>
+            </div>
+        </div>
+    </div>
+</section>
+
+<!-- Features Section -->
+<section class="features">
+    <div class="container">
+        <h2 class="section-title">Why Choose NodeLine Tech?</h2>
+        <div class="features-grid">
+            <div class="feature-card">
+                <div class="feature-icon">⚡</div>
+                <h3>Fast & Reliable</h3>
+                <p>High-speed data transfer and charging with premium materials and gold-plated connectors.</p>
+            </div>
+            <div class="feature-card">
+                <div class="feature-icon">🛡️</div>
+                <h3>Lifetime Warranty</h3>
+                <p>We stand behind our products with a comprehensive lifetime warranty on all cables.</p>
+            </div>
+            <div class="feature-card">
+                <div class="feature-icon">🚚</div>
+                <h3>Fast Shipping</h3>
+                <p>Free shipping on orders over $25. Most orders ship same day and arrive within 2-3 business days.</p>
+            </div>
+            <div class="feature-card">
+                <div class="feature-icon">💬</div>
+                <h3>24/7 Support</h3>
+                <p>Get instant help with our AI-powered chat support, available 24/7 for all your questions.</p>
+            </div>
+        </div>
+    </div>
+</section>
+
+<!-- Popular Products Section -->
+<section class="popular-products">
+    <div class="container">
+        <h2 class="section-title">Popular Products</h2>
+        <div class="products-grid">
+            <div class="product-card">
+                <div class="product-image">🔌</div>
+                <h3>USB-C to USB-C Cable</h3>
+                <p class="product-description">60W fast charging, 10Gbps data transfer, 6ft length</p>
+                <div class="product-price">$19.99</div>
+                <div class="product-rating">⭐⭐⭐⭐⭐ (1,247 reviews)</div>
+                <button class="btn btn-primary" onclick="showProductDetails('usb-c-cable')">More Details</button>
+            </div>
+            <div class="product-card">
+                <div class="product-image">📺</div>
+                <h3>4K HDMI Cable</h3>
+                <p class="product-description">8K@60Hz, 4K@120Hz, HDR10+, 10ft premium cable</p>
+                <div class="product-price">$24.99</div>
+                <div class="product-rating">⭐⭐⭐⭐⭐ (856 reviews)</div>
+                <button class="btn btn-primary" onclick="showProductDetails('4k-hdmi-cable')">More Details</button>
+            </div>
+            <div class="product-card">
+                <div class="product-image">🔋</div>
+                <h3>Multi-Port Charging Hub</h3>
+                <p class="product-description">6 ports, 100W total, USB-C PD, smart charging</p>
+                <div class="product-price">$49.99</div>
+                <div class="product-rating">⭐⭐⭐⭐⭐ (692 reviews)</div>
+                <button class="btn btn-primary" onclick="showProductDetails('charging-hub')">More Details</button>
+            </div>
+            <div class="product-card">
+                <div class="product-image">🔗</div>
+                <h3>USB-C Hub Adapter</h3>
+                <p class="product-description">7-in-1 hub with HDMI, USB-A, SD card, Ethernet</p>
+                <div class="product-price">$34.99</div>
+                <div class="product-rating">⭐⭐⭐⭐⭐ (1,104 reviews)</div>
+                <button class="btn btn-primary" onclick="showProductDetails('usb-c-hub')">More Details</button>
+            </div>
+        </div>
+        <div class="section-cta">
+            <a href="{{ url_for('products') }}" class="btn btn-outline">View All Products</a>
+        </div>
+    </div>
+</section>
+
+<!-- Customer Support CTA -->
+<section class="support-cta">
+    <div class="container">
+        <div class="cta-content">
+            <h2>Need Help Choosing the Right Cable?</h2>
+            <p>Our AI-powered customer service is available 24/7 to help you find the perfect solution for your needs.</p>
+            <div class="cta-actions">
+                <a href="#" class="btn btn-primary btn-large chat-trigger-btn">Start Live Chat 💬</a>
+                <a href="{{ url_for('products') }}" class="btn btn-outline btn-large">Browse Products</a>
+            </div>
+        </div>
+        <div class="cta-features">
+            <div class="cta-feature">
+                <span class="feature-icon">🤖</span>
+                <span>AI-Powered Support</span>
+            </div>
+            <div class="cta-feature">
+                <span class="feature-icon">⚡</span>
+                <span>Instant Responses</span>
+            </div>
+            <div class="cta-feature">
+                <span class="feature-icon">🎯</span>
+                <span>Personalized Recommendations</span>
+            </div>
+        </div>
+    </div>
+</section>
+
+<!-- Customer Reviews Section -->
+<section class="reviews">
+    <div class="container">
+        <h2 class="section-title">What Our Customers Say</h2>
+        <div class="reviews-grid">
+            <div class="review-card">
+                <div class="review-rating">⭐⭐⭐⭐⭐</div>
+                <p class="review-text">"Amazing quality cables! My USB-C cable has been working perfectly for over a year now. The customer service chat helped me choose the right one."</p>
+                <div class="review-author">- Sarah M., Software Developer</div>
+            </div>
+            <div class="review-card">
+                <div class="review-rating">⭐⭐⭐⭐⭐</div>
+                <p class="review-text">"Fast shipping and great prices. The HDMI cable works flawlessly with my 4K monitor. Will definitely order again!"</p>
+                <div class="review-author">- Mike R., Graphic Designer</div>
+            </div>
+            <div class="review-card">
+                <div class="review-rating">⭐⭐⭐⭐⭐</div>
+                <p class="review-text">"The AI chat support is incredible! Got help immediately at 2AM when I needed to find a specific adapter. Highly recommend!"</p>
+                <div class="review-author">- Jennifer L., Marketing Manager</div>
+            </div>
+        </div>
+    </div>
+</section>
+
+<!-- Product Details Modal -->
+<div id="product-details-modal" class="modal" style="display: none;">
+    <div class="modal-content">
+        <div class="modal-header">
+            <h2 id="product-modal-title">Product Details</h2>
+            <span class="close-modal" onclick="closeProductModal()">&times;</span>
+        </div>
+        <div class="modal-body">
+            <div id="product-modal-content" class="product-details-content">
+                <div class="loading">Loading product specifications...</div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<style>
+/* Wider grid + guaranteed 4 columns for Popular Products */
+.popular-products .container {
+    max-width: 1700px !important;
+}
+
+.popular-products .products-grid {
+    grid-template-columns: repeat(4, 1fr) !important;
+}
+
+@media (max-width: 1200px) {
+    .popular-products .products-grid {
+        grid-template-columns: repeat(3, 1fr) !important;
+    }
+}
+
+@media (max-width: 900px) {
+    .popular-products .products-grid {
+        grid-template-columns: repeat(2, 1fr) !important;
+    }
+}
+
+@media (max-width: 480px) {
+    .popular-products .products-grid {
+        grid-template-columns: 1fr !important;
+    }
+}
+
+/* Larger, dark-themed product details popup */
+#product-details-modal .modal-content {
+    background: #14171f !important;
+    color: #e8eaed !important;
+    max-width: 900px !important;
+    width: 92% !important;
+    max-height: 85vh !important;
+    border: 1px solid #2a2e37 !important;
+    border-radius: 16px !important;
+    box-shadow: 0 24px 60px rgba(0, 0, 0, 0.5) !important;
+}
+
+#product-details-modal .modal-header {
+    border-bottom-color: #2a2e37 !important;
+}
+
+#product-details-modal #product-modal-title {
+    color: #e8eaed !important;
+}
+
+@media (max-width: 768px) {
+    #product-details-modal .modal-content {
+        max-width: 94% !important;
+        width: 94% !important;
+    }
+}
+
+.product-details-content {
+    max-height: 70vh;
+    overflow-y: auto;
+    overflow-x: hidden;
+    word-wrap: break-word;
+    line-height: 1.6;
+    scrollbar-width: thin;
+    scrollbar-color: #3ea6ff #1a1d24;
+}
+
+.product-details-content::-webkit-scrollbar {
+    width: 8px;
+}
+
+.product-details-content::-webkit-scrollbar-track {
+    background: #1a1d24;
+    border-radius: 8px;
+}
+
+.product-details-content::-webkit-scrollbar-thumb {
+    background: #3ea6ff;
+    border-radius: 8px;
+}
+
+.product-details-content::-webkit-scrollbar-thumb:hover {
+    background: #22d3ee;
+}
+
+.product-details-content h3 {
+    color: #dfe3ea;
+    margin-top: 20px;
+    margin-bottom: 10px;
+}
+
+.product-details-content h4 {
+    color: #dfe3ea;
+    margin-top: 15px;
+    margin-bottom: 8px;
+}
+
+.product-details-content h5 {
+    color: #98a2b5;
+    margin-top: 12px;
+    margin-bottom: 6px;
+}
+
+.product-details-content p {
+    margin-bottom: 10px;
+}
+
+.product-details-content ul {
+    margin: 10px 0;
+    padding-left: 20px;
+}
+
+.product-details-content li {
+    margin: 5px 0;
+}
+
+.product-details-content strong {
+    color: #1f8fe6;
+}
+
+.loading {
+    text-align: center;
+    padding: 40px;
+    color: #9aa4b0;
+}
+</style>
+
+<script>
+async function showProductDetails(productName) {
+    const modal = document.getElementById('product-details-modal');
+    const title = document.getElementById('product-modal-title');
+    const content = document.getElementById('product-modal-content');
+    
+    // Show modal with loading state
+    modal.style.display = 'flex';
+    title.textContent = 'Loading Product Details...';
+    content.innerHTML = '<div class="loading">Loading product specifications...</div>';
+    
+    try {
+        const response = await fetch(`/api/product/${productName}`);
+        const data = await response.json();
+        
+        if (data.success) {
+            // Set product title
+            const productTitles = {
+                'usb-c-cable': 'USB-C to USB-C Cable',
+                '4k-hdmi-cable': '4K HDMI Cable',
+                'charging-hub': 'Multi-Port Charging Hub',
+                'usb-c-hub': 'USB-C Hub Adapter'
+            };
+            
+            title.textContent = productTitles[productName] || 'Product Details';
+            
+            // Format and display specifications
+            const specs = data.specifications;
+            const formattedSpecs = formatProductSpecs(specs);
+            content.innerHTML = formattedSpecs;
+        } else {
+            content.innerHTML = '<div class="error">Failed to load product specifications. Please try again.</div>';
+        }
+    } catch (error) {
+        console.error('Error fetching product details:', error);
+        content.innerHTML = '<div class="error">Failed to load product specifications. Please try again.</div>';
+    }
+}
+
+function escapeHtml(text) {
+    return text.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+}
+
+function inlineFormat(text) {
+    return escapeHtml(text).replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>');
+}
+
+function formatProductSpecs(specs) {
+    // Parse line-by-line so headers and lists are recognized before
+    // newlines get collapsed into <br>/<p> tags.
+    const lines = specs.split('\n');
+    let html = '';
+    let inList = false;
+
+    for (const rawLine of lines) {
+        const line = rawLine.trim();
+
+        if (line === '') {
+            if (inList) { html += '</ul>'; inList = false; }
+            continue;
+        }
+
+        const headerMatch = line.match(/^(#{1,4})\s+(.*)$/);
+        if (headerMatch) {
+            if (inList) { html += '</ul>'; inList = false; }
+            const level = Math.min(headerMatch[1].length + 2, 6);
+            html += `<h${level}>${inlineFormat(headerMatch[2])}</h${level}>`;
+            continue;
+        }
+
+        const listMatch = line.match(/^-\s+(.*)$/);
+        if (listMatch) {
+            if (!inList) { html += '<ul>'; inList = true; }
+            html += `<li>${inlineFormat(listMatch[1])}</li>`;
+            continue;
+        }
+
+        if (inList) { html += '</ul>'; inList = false; }
+        html += `<p>${inlineFormat(line)}</p>`;
+    }
+    if (inList) html += '</ul>';
+
+    return `<div class="specs-content">${html}</div>`;
+}
+
+function closeProductModal() {
+    const modal = document.getElementById('product-details-modal');
+    modal.style.display = 'none';
+}
+
+// Close modal when clicking outside
+document.addEventListener('click', function(e) {
+    const modal = document.getElementById('product-details-modal');
+    if (e.target === modal) {
+        closeProductModal();
+    }
+});
+</script>
+{% endblock %}

@@ -1,0 +1,676 @@
+{% extends "base.html" %}
+
+{% block title %}Live Chat - NodeLine Tech{% endblock %}
+
+{% block content %}
+<!-- Page Header -->
+<section class="page-header">
+    <div class="container">
+        <div class="header-card">
+            <div class="page-header-content">
+                <h1>Live Chat Support</h1>
+                <p>Get instant help from our AI-powered customer service agent</p>
+                <div class="status-indicator">
+                    <div id="status-dot" class="status-dot online"></div>
+                    <span id="status-text">Agent Online</span>
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
+
+<!-- Chat Interface -->
+<section class="chat-section">
+    <div class="container">
+        <div class="chat-layout">
+            <!-- Main Chat Container -->
+            <div class="glassmorphism-container chat-main">
+                <div class="chat-container">
+                    <div id="chat-messages" class="chat-messages">
+                        <div class="welcome-message">
+                            <div class="agent-avatar">🤖</div>
+                            <div class="message-content">
+                                <h4>Hi! I'm NLTBot</h4>
+                                <p>I'm here to help you find the perfect cables and accessories. Ask me about products, compatibility, or any technical questions!</p>
+                                <div id="welcome-tickets-info" style="display: none;">
+                                    <p><strong>I can see you have active support tickets. Feel free to ask me about them!</strong></p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="typing-indicator" id="typing-indicator" style="display: none;">
+                        <div class="typing-dots">
+                            <span></span>
+                            <span></span>
+                            <span></span>
+                        </div>
+                        <span>AI agent is typing...</span>
+                    </div>
+                    
+                    <form id="chat-form" class="chat-input-form" method="dialog" action="" onsubmit="event.preventDefault(); event.stopPropagation(); return false;" novalidate>
+                        <div class="input-group">
+                            <textarea 
+                                id="message-input" 
+                                placeholder="Type your message here..." 
+                                rows="1"
+                                maxlength="1000"
+                            ></textarea>
+                            <button type="button" id="send-button" class="send-button" disabled>
+                                <span class="send-icon">➤</span>
+                            </button>
+                            <button type="button" id="clear-chat" class="action-button clear-chat" title="Clear Chat History">
+                                Clear
+                            </button>
+                            <button type="button" id="create-ticket-button" class="action-button" title="Create Support Ticket">
+                                Create Ticket
+                            </button>
+                            <button type="button" id="end-conversation-button" class="action-button end-conversation" title="End Conversation & Save Summary">
+                                End Chat
+                            </button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+            
+            <!-- Ticket Sidebar -->
+            <div class="glassmorphism-container ticket-sidebar" id="ticket-sidebar">
+                <div class="sidebar-header">
+                    <h3>Your Tickets</h3>
+                    <button id="toggle-sidebar" class="toggle-button">↔</button>
+                </div>
+                
+                <div id="user-tickets-loading" class="loading-state" style="display: none;">
+                    <div class="spinner-small"></div>
+                    <p>Loading tickets...</p>
+                </div>
+                
+                <div id="no-tickets" class="no-tickets-state">
+                    <p>No active tickets</p>
+                    <button class="btn btn-primary" onclick="showCreateTicketModal()">Create Ticket</button>
+                </div>
+                
+                <div id="user-tickets-list" class="tickets-list"></div>
+                
+                <div class="sidebar-actions">
+                    <button class="btn btn-outline" onclick="refreshUserTickets()">Refresh</button>
+                    <button class="btn btn-primary" onclick="showCreateTicketModal()">New Ticket</button>
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
+
+<!-- Create Ticket Modal -->
+<div id="create-ticket-modal" class="modal" style="display: none;">
+    <div class="modal-content glassmorphism-container">
+        <div class="modal-header">
+            <h3>Create Support Ticket</h3>
+            <button class="modal-close" onclick="closeCreateTicketModal()">&times;</button>
+        </div>
+        
+        <form id="create-ticket-form" class="modal-body">
+            <div class="form-group">
+                <label for="ticket-subject">Subject *</label>
+                <input type="text" id="ticket-subject" placeholder="Brief description of your issue" required>
+            </div>
+            
+            <div class="form-group">
+                <label for="ticket-category">Category</label>
+                <select id="ticket-category">
+                    <option value="General">General Support</option>
+                    <option value="Technical">Technical Issue</option>
+                    <option value="Product">Product Question</option>
+                    <option value="Billing">Billing</option>
+                    <option value="Shipping">Shipping & Delivery</option>
+                </select>
+            </div>
+            
+            <div class="form-group">
+                <label for="ticket-priority">Priority</label>
+                <select id="ticket-priority">
+                    <option value="low">Low</option>
+                    <option value="medium" selected>Medium</option>
+                    <option value="high">High</option>
+                    <option value="urgent">Urgent</option>
+                </select>
+            </div>
+            
+            <div class="form-group">
+                <label for="ticket-description">Description *</label>
+                <textarea id="ticket-description" rows="4" placeholder="Please describe your issue in detail..." required></textarea>
+            </div>
+            
+            <div class="form-group">
+                <label>
+                    <input type="checkbox" id="include-chat-context" checked>
+                    Include recent chat conversation in ticket
+                </label>
+            </div>
+            
+            <div class="modal-actions">
+                <button type="button" class="btn btn-outline" onclick="closeCreateTicketModal()">Cancel</button>
+                <button type="submit" class="btn btn-primary">Create Ticket</button>
+            </div>
+        </form>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_styles %}
+<style>
+/* Chat Layout with Sidebar */
+.chat-layout {
+    display: grid;
+    grid-template-columns: 1fr 320px;
+    gap: 2rem;
+    max-width: min(1800px, 96vw);
+    margin: 0 auto;
+}
+
+.chat-main {
+    min-height: min(72vh, 860px);
+}
+
+.ticket-sidebar {
+    background: rgba(255, 255, 255, 0.12);
+    padding: 1.5rem;
+    height: fit-content;
+    max-height: 80vh;
+    overflow-y: auto;
+}
+
+.sidebar-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 1rem;
+    padding-bottom: 0.5rem;
+    border-bottom: 1px solid rgba(255,255,255,0.2);
+}
+
+.sidebar-header h3 {
+    color: white;
+    margin: 0;
+    font-size: 1.2rem;
+}
+
+.toggle-button {
+    background: rgba(255,255,255,0.2);
+    border: none;
+    color: white;
+    padding: 0.25rem 0.5rem;
+    border-radius: 4px;
+    cursor: pointer;
+}
+
+.loading-state {
+    text-align: center;
+    padding: 2rem;
+    color: rgba(255,255,255,0.8);
+}
+
+.spinner-small {
+    border: 2px solid rgba(255,255,255,0.3);
+    border-top: 2px solid white;
+    border-radius: 50%;
+    width: 20px;
+    height: 20px;
+    animation: spin 1s linear infinite;
+    margin: 0 auto 0.5rem;
+}
+
+.no-tickets-state {
+    text-align: center;
+    padding: 2rem 1rem;
+    color: rgba(255,255,255,0.8);
+}
+
+.tickets-list {
+    max-height: 400px;
+    overflow-y: auto;
+}
+
+.ticket-item {
+    background: rgba(255,255,255,0.1);
+    border: 1px solid rgba(255,255,255,0.2);
+    border-radius: 8px;
+    padding: 1rem;
+    margin-bottom: 0.5rem;
+    cursor: pointer;
+    transition: all 0.3s ease;
+}
+
+.ticket-item:hover {
+    background: rgba(255,255,255,0.15);
+    transform: translateY(-1px);
+}
+
+.ticket-item h4 {
+    color: white;
+    font-size: 0.9rem;
+    margin: 0 0 0.5rem 0;
+}
+
+.ticket-item p {
+    color: rgba(255,255,255,0.8);
+    font-size: 0.8rem;
+    margin: 0.25rem 0;
+}
+
+.ticket-status {
+    display: inline-block;
+    padding: 0.2rem 0.5rem;
+    border-radius: 10px;
+    font-size: 0.7rem;
+    font-weight: 500;
+    text-transform: uppercase;
+}
+
+.status-open { background: rgba(52, 152, 219, 0.8); color: white; }
+.status-in_progress { background: rgba(241, 196, 15, 0.8); color: white; }
+.status-resolved { background: rgba(46, 204, 113, 0.8); color: white; }
+
+.sidebar-actions {
+    margin-top: 1rem;
+    padding-top: 1rem;
+    border-top: 1px solid rgba(255,255,255,0.2);
+    display: flex;
+    gap: 0.5rem;
+}
+
+.sidebar-actions .btn {
+    flex: 1;
+    padding: 0.5rem;
+    font-size: 0.8rem;
+}
+
+/* Enhanced Input Group */
+.input-group {
+    position: relative;
+    display: flex;
+    align-items: flex-end;
+    gap: 0.5rem;
+}
+
+.action-button {
+    background: rgba(255, 255, 255, 0.2);
+    border: 1px solid rgba(255, 255, 255, 0.3);
+    color: white;
+    padding: 0.75rem;
+    border-radius: 10px;
+    cursor: pointer;
+    font-size: 1.1rem;
+    transition: all 0.3s ease;
+    min-width: 44px;
+    height: 44px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.action-button:hover {
+    background: rgba(255, 255, 255, 0.3);
+    transform: translateY(-1px);
+}
+
+/* Modal Styles */
+.modal {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: rgba(0,0,0,0.8);
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    z-index: 2000;
+}
+
+.modal-content {
+    max-width: 500px;
+    width: 95%;
+    max-height: 80vh;
+    overflow-y: auto;
+    padding: 2rem;
+}
+
+.modal-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 1.5rem;
+}
+
+.modal-header h3 {
+    color: white;
+    margin: 0;
+}
+
+.modal-close {
+    background: none;
+    border: none;
+    color: white;
+    font-size: 1.5rem;
+    cursor: pointer;
+    opacity: 0.7;
+    transition: opacity 0.3s ease;
+}
+
+.modal-close:hover {
+    opacity: 1;
+}
+
+.form-group {
+    margin-bottom: 1rem;
+}
+
+.form-group label {
+    display: block;
+    color: rgba(255,255,255,0.9);
+    margin-bottom: 0.5rem;
+    font-weight: 500;
+}
+
+.form-group input,
+.form-group select,
+.form-group textarea {
+    width: 100%;
+    padding: 0.75rem;
+    border: 1px solid rgba(255,255,255,0.3);
+    border-radius: 8px;
+    background: rgba(255,255,255,0.1);
+    color: white;
+    font-size: 0.9rem;
+}
+
+.form-group input::placeholder,
+.form-group textarea::placeholder {
+    color: rgba(255,255,255,0.6);
+}
+
+.form-group input[type="checkbox"] {
+    width: auto;
+    margin-right: 0.5rem;
+}
+
+.modal-actions {
+    display: flex;
+    gap: 1rem;
+    justify-content: flex-end;
+    margin-top: 2rem;
+}
+
+.btn {
+    padding: 0.75rem 1.5rem;
+    border: none;
+    border-radius: 8px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.3s ease;
+}
+
+.btn-primary {
+    background: linear-gradient(135deg, #3ea6ff 0%, #22d3ee 100%);
+    color: white;
+}
+
+.btn-outline {
+    background: transparent;
+    color: white;
+    border: 1px solid rgba(255,255,255,0.3);
+}
+
+.btn:hover {
+    transform: translateY(-1px);
+}
+
+/* Responsive Design */
+@media (max-width: 768px) {
+    .chat-layout {
+        grid-template-columns: 1fr;
+    }
+    
+    .ticket-sidebar {
+        order: -1;
+        max-height: 300px;
+    }
+    
+    .sidebar-actions {
+        flex-direction: column;
+    }
+    
+    .modal-content {
+        margin: 1rem;
+        padding: 1.5rem;
+    }
+    
+    .modal-actions {
+        flex-direction: column;
+    }
+}
+
+/* Sidebar collapsed state */
+.ticket-sidebar.collapsed {
+    width: 60px;
+    padding: 1rem 0.5rem;
+}
+
+.ticket-sidebar.collapsed .sidebar-header h3,
+.ticket-sidebar.collapsed .tickets-list,
+.ticket-sidebar.collapsed .sidebar-actions,
+.ticket-sidebar.collapsed .no-tickets-state {
+    display: none;
+}
+</style>
+{% endblock %}
+
+{% block extra_scripts %}
+<script src="{{ url_for('static', filename='chat.js') }}?v=ff4"></script>
+<script>
+// Global variables for ticket integration
+let currentConversationId = null;
+let userTickets = [];
+
+document.addEventListener('DOMContentLoaded', function() {
+    // Auto-resize textarea
+    const messageInput = document.getElementById('message-input');
+    messageInput.addEventListener('input', function() {
+        this.style.height = 'auto';
+        this.style.height = Math.min(this.scrollHeight, 120) + 'px';
+        
+        // Enable/disable send button
+        const sendButton = document.getElementById('send-button');
+        sendButton.disabled = this.value.trim().length === 0;
+    });
+    
+    // Load user tickets if logged in
+    loadUserTickets();
+    
+    // Set up create ticket form
+    setupCreateTicketModal();
+});
+
+function loadUserTickets() {
+    const loading = document.getElementById('user-tickets-loading');
+    const noTickets = document.getElementById('no-tickets');
+    const ticketsList = document.getElementById('user-tickets-list');
+    
+    loading.style.display = 'block';
+    noTickets.style.display = 'none';
+    ticketsList.innerHTML = '';
+    
+    fetch('/api/chat/user-tickets')
+        .then(response => response.json())
+        .then(data => {
+            loading.style.display = 'none';
+            
+            if (data.success && data.tickets.length > 0) {
+                userTickets = data.tickets;
+                displayUserTickets(data.tickets);
+                
+                // Show ticket info in welcome message
+                const welcomeTicketsInfo = document.getElementById('welcome-tickets-info');
+                if (welcomeTicketsInfo) {
+                    welcomeTicketsInfo.style.display = 'block';
+                }
+            } else {
+                noTickets.style.display = 'block';
+            }
+        })
+        .catch(error => {
+            loading.style.display = 'none';
+            noTickets.style.display = 'block';
+            console.error('Error loading user tickets:', error);
+        });
+}
+
+function displayUserTickets(tickets) {
+    const ticketsList = document.getElementById('user-tickets-list');
+    ticketsList.innerHTML = '';
+    
+    tickets.forEach(ticket => {
+        const ticketElement = createTicketElement(ticket);
+        ticketsList.appendChild(ticketElement);
+    });
+}
+
+function createTicketElement(ticket) {
+    const div = document.createElement('div');
+    div.className = 'ticket-item';
+    div.onclick = () => viewTicketInChat(ticket);
+    
+    const createdDate = new Date(ticket.created_at).toLocaleDateString();
+    
+    div.innerHTML = `
+        <h4>#${ticket.number}: ${ticket.subject}</h4>
+        <p><span class="ticket-status status-${ticket.status}">${ticket.status.replace('_', ' ')}</span></p>
+        <p><strong>Category:</strong> ${ticket.category}</p>
+        <p><strong>Priority:</strong> ${ticket.priority}</p>
+        <p><strong>Created:</strong> ${createdDate}</p>
+        ${ticket.assigned_agent ? `<p><strong>Agent:</strong> ${ticket.assigned_agent}</p>` : ''}
+    `;
+    
+    return div;
+}
+
+function viewTicketInChat(ticket) {
+    // Add ticket info to chat
+    const ticketMessage = `I'd like to discuss my ticket #${ticket.number}: "${ticket.subject}". Status: ${ticket.status}, Priority: ${ticket.priority}`;
+    
+    const messageInput = document.getElementById('message-input');
+    messageInput.value = ticketMessage;
+    messageInput.focus();
+    
+    // Trigger input event to enable send button
+    messageInput.dispatchEvent(new Event('input'));
+}
+
+function refreshUserTickets() {
+    loadUserTickets();
+}
+
+function showCreateTicketModal() {
+    document.getElementById('create-ticket-modal').style.display = 'flex';
+}
+
+function closeCreateTicketModal() {
+    document.getElementById('create-ticket-modal').style.display = 'none';
+    document.getElementById('create-ticket-form').reset();
+}
+
+function setupCreateTicketModal() {
+    const form = document.getElementById('create-ticket-form');
+    
+    form.addEventListener('submit', function(e) {
+        e.preventDefault();
+        
+        const subject = document.getElementById('ticket-subject').value.trim();
+        const description = document.getElementById('ticket-description').value.trim();
+        const category = document.getElementById('ticket-category').value;
+        const priority = document.getElementById('ticket-priority').value;
+        const includeChat = document.getElementById('include-chat-context').checked;
+        
+        if (!subject || !description) {
+            alert('Please fill in all required fields');
+            return;
+        }
+        
+        const ticketData = {
+            subject,
+            description,
+            category,
+            priority,
+            conversation_id: includeChat ? currentConversationId : null
+        };
+        
+        const csrfToken = document.querySelector('meta[name="csrf-token"]').getAttribute('content');
+        
+        fetch('/api/chat/create-ticket', {
+            method: 'POST',
+            headers: { 
+                'Content-Type': 'application/json',
+                'X-CSRFToken': csrfToken
+            },
+            body: JSON.stringify(ticketData)
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                alert(data.message);
+                closeCreateTicketModal();
+                loadUserTickets(); // Refresh ticket list
+                
+                // Add success message to chat
+                addMessageToChat('system', `✅ ${data.message}`);
+            } else {
+                alert('Failed to create ticket: ' + data.error);
+            }
+        })
+        .catch(error => {
+            console.error('Error creating ticket:', error);
+            alert('Error creating ticket. Please try again.');
+        });
+    });
+}
+
+// Update conversation ID when chat starts
+function updateConversationId(conversationId) {
+    currentConversationId = conversationId;
+}
+
+// Add message to chat (utility function)
+function addMessageToChat(role, content) {
+    const chatMessages = document.getElementById('chat-messages');
+    const messageDiv = document.createElement('div');
+    messageDiv.className = `message ${role}-message`;
+    
+    if (role === 'system') {
+        messageDiv.innerHTML = `
+            <div class="system-message">
+                <div class="message-content">
+                    ${content}
+                </div>
+            </div>
+        `;
+    }
+    
+    chatMessages.appendChild(messageDiv);
+    chatMessages.scrollTop = chatMessages.scrollHeight;
+}
+
+// Toggle sidebar
+document.getElementById('toggle-sidebar').addEventListener('click', function() {
+    const sidebar = document.getElementById('ticket-sidebar');
+    sidebar.classList.toggle('collapsed');
+});
+
+// Close modal on outside click
+document.getElementById('create-ticket-modal').addEventListener('click', function(e) {
+    if (e.target === this) {
+        closeCreateTicketModal();
+    }
+});
+</script>
+{% endblock %}

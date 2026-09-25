@@ -1,0 +1,25 @@
+# Docker Compose override for development
+# This file enables live code reloading without rebuilds
+# Place this file in the same directory as docker-compose.yml
+
+services:
+  chatbot:
+    volumes:
+      # Mount application code for live reloading
+      - ./app.py:/app/app.py
+      - ./templates:/app/templates
+      - ./static:/app/static
+      - ./scripts:/app/scripts
+      - ./knowledge_base:/app/knowledge_base
+      # Scripts are already mounted via ./scripts:/app/scripts above
+      # Keep the data volume for persistence
+      - chatbot_data:/app/data
+      - ./.selected_model:/app/.selected_model
+    environment:
+      # Enable Flask development mode for auto-reload
+      - FLASK_ENV=development
+      - FLASK_DEBUG=1
+      - ANONYMIZED_TELEMETRY=False
+      - CHROMA_TELEMETRY_ENABLED=false
+      - CHROMADB_TELEMETRY_DISABLED=true
+      - POSTHOG_DISABLED=true

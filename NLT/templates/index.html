@@ -1,0 +1,86 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Customer Service - Talk to Agent</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1>Customer Service Chat</h1>
+            <div class="status-indicator">
+                <div id="status-dot" class="status-dot"></div>
+                <span id="status-text">Checking connection...</span>
+            </div>
+        </header>
+
+        <div class="main-content">
+            <!-- Agent Info Panel -->
+            <div class="agent-panel">
+                <h3>Customer Service Agent</h3>
+                <div class="agent-info">
+                    <p><strong>AI Agent:</strong> <span id="configured-model">{{ configured_model or 'Loading...' }}</span></p>
+                    <p><strong>Status:</strong> <span id="agent-status">Connecting...</span></p>
+                    <p class="agent-description">Your AI-powered customer service assistant is ready to help with product questions, technical support, and general inquiries.</p>
+                </div>
+            </div>
+
+            <!-- Chat Interface -->
+            <div class="chat-container">
+                <div class="chat-header">
+                    <h3>Chat</h3>
+                    <button id="clear-chat" class="clear-btn" title="Clear conversation">Clear</button>
+                </div>
+                
+                <div id="chat-messages" class="chat-messages">
+                    <div class="welcome-message">
+                        <h4>Welcome to Customer Service!</h4>
+                        <p>Hello! I'm your AI customer service assistant. How can I help you today?</p>
+                        <ul>
+                            <li>Ask questions about products and services</li>
+                            <li>Get technical support and troubleshooting help</li>
+                            <li>Your conversation history will be preserved</li>
+                            <li>I can escalate complex issues to human agents</li>
+                        </ul>
+                    </div>
+                </div>
+
+                <div class="chat-input-container">
+                    <div class="input-group">
+                        <textarea 
+                            id="message-input" 
+                            placeholder="Type your message here..." 
+                            rows="3"
+                            disabled
+                        ></textarea>
+                        <button id="send-btn" disabled>
+                            <span class="send-icon">➤</span>
+                            Send
+                        </button>
+                        <button type="button" id="end-conversation-button" class="action-button end-conversation" title="End Conversation & Save Summary">
+                            End Chat
+                        </button>
+                    </div>
+                    <div class="input-info">
+                        <span id="char-count">0 characters</span>
+                        <span class="divider">•</span>
+                        <span>Press Ctrl+Enter to send</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Loading overlay -->
+        <div id="loading-overlay" class="loading-overlay hidden">
+            <div class="loading-spinner">
+                <div class="spinner"></div>
+                <p>Thinking...</p>
+            </div>
+        </div>
+    </div>
+
+    <script src="{{ url_for('static', filename='script.js') }}"></script>
+</body>
+</html>

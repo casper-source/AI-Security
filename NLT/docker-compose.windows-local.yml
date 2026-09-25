@@ -1,0 +1,45 @@
+# Local Windows dev setup: Ollama runs natively on the host,
+# Flask app runs in Docker and reaches it via host.docker.internal
+# (Docker Desktop's stable way to reach the host, unlike network_mode: host
+# which requires an experimental feature flag on Windows).
+
+services:
+  chatbot:
+    build: .
+    container_name: nlt_chatbot_windows
+    restart: unless-stopped
+    ports:
+      - "5000:5000"
+    volumes:
+      - chatbot_data:/app/data
+      - vector_db_data:/app/data/vector_db
+      - ./templates:/app/templates
+      - ./static:/app/static
+      - ./app.py:/app/app.py
+      - ./scripts:/app/scripts
+      - ./knowledge_base:/app/knowledge_base
+      - ./.selected_model:/app/.selected_model
+    environment:
+      - OLLAMA_BASE_URL=http://host.docker.internal:11434
+      - FLASK_ENV=production
+      - FLASK_DEBUG=0
+      - DATABASE_PATH=/app/data/nlt_customer_service.db
+      - TRANSFORMERS_CACHE=/app/data/transformers_cache
+      - HF_HOME=/app/data/huggingface_cache
+      - ANONYMIZED_TELEMETRY=False
+      - CHROMA_TELEMETRY_ENABLED=false
+      - CHROMADB_TELEMETRY_DISABLED=true
+      - POSTHOG_DISABLED=true
+      - AI_SECURITY_LEVEL=${AI_SECURITY_LEVEL:-1}
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:5000/api/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 10s
+
+volumes:
+  chatbot_data:
+  vector_db_data:
