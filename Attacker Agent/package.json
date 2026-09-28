@@ -1,0 +1,15 @@
+{
+  "name": "week3-attacker-agent",
+  "version": "1.0.0",
+  "private": true,
+  "type": "module",
+  "description": "Week 3 lab — build an attacker AI agent against MerciBank, then verify + promote findings like the AI Audit Service.",
+  "engines": { "node": ">=18" },
+  "scripts": {
+    "start": "node attacker.mjs",
+    "attack": "node attacker.mjs",
+    "verify": "node verify.mjs",
+    "clean": "node -e \"fs.rmSync('campaign',{recursive:true,force:true})\"",
+    "health": "node -e \"fetch('http://localhost:8080/health').then(r=>r.json()).then(j=>console.log(j)).catch(()=>{console.log('MerciBank not running — start it in ../week2-mercibank');process.exit(1)})\""
+  }
+}

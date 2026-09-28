@@ -153,19 +153,53 @@ function executeTool(name, args, session, flags) {
 }
 
 // --- The agent loop: call the model, run any tools it asks for, repeat until it answers -----
+const pause = (ms) => new Promise((res) => setTimeout(res, ms));
+
+// "fetch failed" is a dropped socket (cold TLS, ECONNRESET), not a model refusal. The first call
+// after an idle stretch is the one that usually dies; a short retry gets a live connection.
+function transientUpstream(err, status) {
+  if (status === 429 || status === 502 || status === 503 || status === 504) return true;
+  const code = err?.cause?.code || err?.code || '';
+  const msg = `${err?.message || ''} ${err?.cause?.message || ''} ${code}`;
+  return /fetch failed|ECONNRESET|ETIMEDOUT|EAI_AGAIN|ECONNREFUSED|UND_ERR|socket hang up/i.test(msg);
+}
+
 async function callModel(messages) {
-  const r = await fetch(`${LLM_BASE}/chat/completions`, {
-    method: 'POST',
-    headers: {
-      'Content-Type': 'application/json',
-      Authorization: `Bearer ${LLM_KEY}`,
-      'HTTP-Referer': 'https://university.engenious.io', // OpenRouter niceties (ignored elsewhere)
-      'X-Title': 'MerciBank Lab',
-    },
-    body: JSON.stringify({ model: LLM_MODEL, messages, tools: TOOLS, tool_choice: 'auto', temperature: 0.3, max_tokens: 700 }),
-  });
-  if (!r.ok) throw new Error(`LLM ${r.status}: ${(await r.text()).slice(0, 300)}`);
-  return r.json();
+  const attempts = 3;
+  let last;
+  for (let attempt = 0; attempt < attempts; attempt++) {
+    try {
+      const r = await fetch(`${LLM_BASE}/chat/completions`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: `Bearer ${LLM_KEY}`,
+          'HTTP-Referer': 'https://university.engenious.io', // OpenRouter niceties (ignored elsewhere)
+          'X-Title': 'MerciBank Lab',
+        },
+        body: JSON.stringify({ model: LLM_MODEL, messages, tools: TOOLS, tool_choice: 'auto', temperature: 0.3, max_tokens: 700 }),
+      });
+      if (!r.ok) {
+        const body = (await r.text()).slice(0, 300);
+        if (transientUpstream(null, r.status) && attempt < attempts - 1) {
+          const wait = Number(r.headers.get('retry-after')) || 0.4 * (attempt + 1);
+          await pause(wait * 1000);
+          continue;
+        }
+        throw new Error(`LLM ${r.status}: ${body}`);
+      }
+      return await r.json();
+    } catch (e) {
+      last = e;
+      if (String(e.message || '').startsWith('LLM ') || !transientUpstream(e) || attempt === attempts - 1) {
+        const code = e?.cause?.code;
+        if (code && !String(e.message || '').includes(code)) throw new Error(`${e.message} (${code})`);
+        throw e;
+      }
+      await pause(400 * (attempt + 1));
+    }
+  }
+  throw last;
 }
 
 async function runAgent({ query, session }) {
