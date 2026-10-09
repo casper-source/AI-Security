@@ -1,0 +1,9 @@
+.env
+campaign/
+node_modules/
+**/.promptfoo-cache/
+campaign/regression/promptfoo-viewer.log
+campaign/regression/promptfoo-viewer-out.log
+
+# Instructor / teaching materials (presenter guides, slides, exercise answer keys) — kept on the HDD, not the repo
+labs/

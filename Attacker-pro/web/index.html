@@ -1,0 +1,155 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>RedCell — AI attacker agent</title>
+<link rel="stylesheet" href="styles.css">
+</head>
+<body>
+<div class="app">
+  <header>
+    <div class="brand">Red<span class="dot">●</span>Cell</div>
+    <div class="meta" id="metaTarget">target: —</div>
+    <div class="meta" id="metaBrains">brains: —</div>
+    <div class="spacer"></div>
+    <div class="header-font-scale" id="fontScaleWrap" title="Text size preset">
+      <span class="header-font-scale-label">Text</span>
+      <div class="font-scale-btns" role="group" aria-label="Text size">
+        <button type="button" class="font-scale-btn" data-pct="85">85%</button>
+        <button type="button" class="font-scale-btn active" data-pct="100">100%</button>
+        <button type="button" class="font-scale-btn" data-pct="120">120%</button>
+      </div>
+    </div>
+    <span class="badge" id="statusBadge">connecting…</span>
+  </header>
+
+  <div class="main">
+    <aside class="side">
+      <div class="group">
+        <h3>Target</h3>
+        <label>Adapter</label>
+        <select id="adapter"></select>
+        <label>Target URL <span class="hint">(mercibank/http/openai)</span></label>
+        <input id="targetUrl" placeholder="http://localhost:8080/v1/chat/completions">
+        <label>Target key</label>
+        <input id="targetKey" placeholder="merci-lab-key">
+      </div>
+
+      <div class="group">
+        <h3>Attacker brain <span class="hint">(optional)</span></h3>
+        <label>Provider</label>
+        <select id="llmProvider">
+          <option value="openai">OpenAI-compatible (OpenRouter / OpenAI / local)</option>
+          <option value="openrouter">OpenRouter</option>
+          <option value="anthropic">Anthropic (native)</option>
+        </select>
+        <label>Base URL <span class="hint">(blank = provider default)</span></label>
+        <input id="llmBase" placeholder="blank, or http://127.0.0.1:8000/v1 for local">
+        <label>API key <span class="hint">(memory only, never saved)</span></label>
+        <input id="llmKey" type="password" placeholder="sk-… or local">
+        <label>Model</label>
+        <input id="llmModel" placeholder="openai/gpt-4o-mini">
+        <button class="btn" id="saveCfg">Save config</button>
+      </div>
+
+      <div class="group">
+        <h3>Campaign</h3>
+        <label>Campaign workspace</label>
+        <select id="verifyCampaign" aria-label="Campaign workspace"></select>
+        <div class="hint" id="verifyCampaignHint">Default: New campaign (archives live, then runs clean). After a run, Current (live) appears for verify.</div>
+        <div class="row">
+          <div><label>Episodes</label><input id="episodes" value="12"></div>
+          <div><label>Repro bar</label><input id="reproMin" value="3" title="REPRO_MIN of REPRO_RUNS"></div>
+        </div>
+        <label>Strategies <span class="hint">(all if none checked)</span></label>
+        <div id="strategyList"></div>
+      </div>
+
+      <div class="group">
+        <h3>Verify</h3>
+        <div class="hint">Uses the campaign workspace above — verify, reports, findings, and artifacts all read that folder.</div>
+      </div>
+
+      <div class="group">
+        <button class="btn primary" id="runBtn">▶ Run campaign</button>
+        <button class="btn" id="verifyBtn">✔ Verify · score · promote</button>
+        <button class="btn" id="reportBtn">📄 Build reports</button>
+        <button class="btn danger" id="stopBtn" disabled>■ Stop</button>
+      </div>
+      <div class="hint">Authorized lab only. Localhost by default — non-localhost needs ROE_AUTHORIZED + allowlist.</div>
+    </aside>
+
+    <section class="content">
+      <nav class="tabs">
+        <div class="tab active" data-pane="live">Live run</div>
+        <div class="tab" data-pane="findings">Findings <span id="fCount" class="badge"></span></div>
+        <div class="tab" data-pane="reports">Reports</div>
+        <div class="tab" data-pane="promptfoo">promptfoo</div>
+        <div class="tab" data-pane="artifacts">Artifacts</div>
+      </nav>
+
+      <div class="pane active" id="pane-live">
+        <div class="live-main" id="liveMain">
+          <div class="stage-rail-wrap" id="stageRailWrap">
+            <div class="stage-rail-row">
+              <div id="stageRail" class="stage-rail" aria-label="Pipeline stage"></div>
+              <div id="stageRailMsg" class="stage-rail-msg hidden" aria-live="polite"></div>
+            </div>
+          </div>
+          <div id="verifyBrief" class="verify-brief hidden" aria-label="Verify run summary"></div>
+          <nav class="episode-nav hidden" id="episodeNav" aria-label="Episode history">
+            <button type="button" class="ep-nav-btn" id="epPrev" aria-label="Previous episode">‹</button>
+            <label class="ep-select-wrap">
+              <span class="ep-select-label">Episode</span>
+              <select id="epSelect" aria-label="Select episode"></select>
+            </label>
+            <button type="button" class="ep-nav-btn" id="epNext" aria-label="Next episode">›</button>
+            <button type="button" class="ep-live-btn" id="epLive" title="Follow the episode currently running">Live</button>
+          </nav>
+          <div id="episodeHead" class="episode-head hidden"></div>
+          <div class="table-wrap">
+            <div id="strategyLog" class="strategy-log hidden" aria-label="Campaign strategies"></div>
+            <table id="turnTable" class="turn-table">
+              <thead id="turnThead"><tr><th>strategy</th><th>turns</th><th>outcome</th><th>ms</th><th>tokens</th></tr></thead>
+              <tbody id="turnBody"></tbody>
+            </table>
+            <div id="turnEmpty" class="empty" style="padding:16px">Start a campaign or verify run to see the turn log.</div>
+          </div>
+        </div>
+        <div class="log-splitter hidden" id="logSplitter" role="separator" aria-orientation="horizontal" aria-label="Resize compact event log" tabindex="0"></div>
+        <details class="compact-log" id="compactWrap"><summary>Compact event log</summary><div class="compact-log-body"><div id="stream"></div></div></details>
+      </div>
+
+      <div class="pane" id="pane-findings"><div class="cards" id="cards"><div class="empty">No findings yet — run a campaign, then verify.</div></div></div>
+
+      <div class="pane" id="pane-reports">
+        <div class="seg">
+          <div class="tab active" data-aud="developer">Developer</div>
+          <div class="tab" data-aud="stakeholder">Stakeholder</div>
+        </div>
+        <div class="md" id="reportBody"><div class="empty">Build reports after verifying findings.</div></div>
+      </div>
+
+      <div class="pane" id="pane-promptfoo">
+        <p class="hint">RedCell promotes every confirmed finding into a promptfoo regression test. Run one below — a <b>FAIL = the bug is live</b> (the test caught it). promptfoo's own results viewer is embedded; it also opens on its own port.</p>
+        <div style="display:flex;gap:8px;align-items:center;margin:10px 0;flex-wrap:wrap">
+          <button class="btn" id="pfOpen" style="width:auto;margin:0">Open promptfoo ↗</button>
+          <button class="btn" id="pfStart" style="width:auto;margin:0">Start / refresh viewer</button>
+          <span class="badge" id="pfStatus">checking…</span>
+        </div>
+        <div id="pfRegressions"><div class="empty">No promoted regressions yet — verify some findings first.</div></div>
+        <iframe id="pfFrame" title="promptfoo viewer" style="width:100%;height:58vh;border:1px solid var(--line);border-radius:8px;background:#0d1117;margin-top:12px"></iframe>
+        <p class="hint" id="pfNote">The iframe often stays blank (promptfoo blocks embedding). Use <b>Open promptfoo ↗</b> after the badge shows <b>viewer up</b>. First start can take 1–2 minutes while <code>npx</code> downloads promptfoo. Run ▶ on a regression first so the viewer has results.</p>
+      </div>
+
+      <div class="pane" id="pane-artifacts">
+        <p class="hint">Promoted promptfoo artifacts (written by Verify). Run them against the real target.</p>
+        <div id="artifactList" class="md"><div class="empty">Nothing promoted yet.</div></div>
+      </div>
+    </section>
+  </div>
+</div>
+<script src="app.js"></script>
+</body>
+</html>
