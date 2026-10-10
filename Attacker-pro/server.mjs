@@ -23,7 +23,8 @@ import { toRedteamYaml } from './lib/promote.mjs';
 import { pickAdapter, ADAPTERS } from './adapters/index.mjs';
 import * as brains from './lib/brains.mjs';
 import * as mem from './lib/memory.mjs';
-import { DEFAULT_STRATEGIES } from './strategies/catalog.mjs';
+import { resolveTargetId } from './lib/target.mjs';
+import { buildStrategyCatalog, prepareDashboardRun } from './lib/dashboard-catalog.mjs';
 
 const HERE = dirname(fileURLToPath(import.meta.url));
 const WEB = join(HERE, 'web');
@@ -76,17 +77,30 @@ async function buildReportsInCampaign(campaignId) {
   return mem.withCampaignRootAsync(campaignId, async () => {
     const fs = mem.loadAllFindings();
     const brain = brains.available('report');
-    const dev = await developerReport(fs, { brain });
-    const exec = await stakeholderReport(fs, { brain });
+    const dev = await developerReport(fs, { brain, campaignId: campaignId });
+    const exec = await stakeholderReport(fs, { brain, campaignId: campaignId });
     const p1 = mem.saveReport('developer.md', dev);
     const p2 = mem.saveReport('stakeholder.md', exec);
     return { developer: p1, stakeholder: p2, confirmed: fs.filter((f) => f.status === 'CONFIRMED').length };
   });
 }
 
-function strategyIdsForDashboardRun(only) {
-  if (only?.length) return [...only].sort();
-  return DEFAULT_STRATEGIES.map((s) => s.id);
+function dashboardStatePayload(adapterOverride) {
+  const cat = buildStrategyCatalog(adapterOverride);
+  return {
+    adapters: ADAPTERS,
+    adapter: cat.adapter,
+    targetId: cat.targetId,
+    brains: brains.status(),
+    running: run.running,
+    stage: run.stage,
+    strategies: cat.strategies,
+    catalogEmpty: cat.catalogEmpty,
+    emptyMessage: cat.emptyMessage,
+    profile: mem.loadProfile(),
+    counts: countFindings(),
+    campaigns: campaignOptionsForUi(),
+  };
 }
 
 function killProcessTree(pid) {
@@ -151,12 +165,15 @@ async function stopPromptfooViewer() {
 
 async function startCampaign(o) {
   if (run.running) return { error: 'a run is already in progress' };
+  const runPrep = prepareDashboardRun(o.adapter, o.only?.length ? o.only : null);
+  if (runPrep.error) return { error: runPrep.error };
   await stopPromptfooViewer();
   const { pick, runRoot, isNew, isArchive } = parseDashboardCampaign(o.campaign);
   let archived = null;
   try {
     mem.withCampaignRoot('active', () => {
-      archived = mem.archiveCampaignWorkspace({ adapter: o.adapter, source: 'dashboard-run', continued: pick });
+      const { targetId } = resolveTargetId({ adapter: o.adapter });
+      archived = mem.archiveCampaignWorkspace({ adapter: o.adapter, targetId, source: 'dashboard-run', continued: pick });
     });
   } catch (e) {
     return { error: e.message };
@@ -174,9 +191,8 @@ async function startCampaign(o) {
     continuingArchive: isArchive,
   });
   const episodesPlanned = Number(o.episodes) || 12;
-  const runStrategyIds = strategyIdsForDashboardRun(o.only);
   mem.withCampaignRoot(runRoot, () => {
-    mem.saveCampaignStrategyIds(runStrategyIds);
+    mem.saveCampaignStrategyIds(runPrep.strategyIds);
   });
   (async () => {
     let runError = null;
@@ -185,8 +201,13 @@ async function startCampaign(o) {
       await mem.withCampaignRootAsync(runRoot, async () => {
         if (!isNew) process.env.RC_FRESH_REGISTER = '0';
         await runCampaign({
-          adapter: o.adapter, episodes: episodesPlanned, all: o.all, fresh: false,
-          only: o.only?.length ? o.only : null, stopRef: run.stopRef,
+          adapter: runPrep.adapter,
+          targetId: runPrep.targetId,
+          episodes: episodesPlanned,
+          all: o.all,
+          fresh: false,
+          only: runPrep.only,
+          stopRef: run.stopRef,
         });
       });
     }
@@ -273,12 +294,12 @@ const server = createServer(async (req, res) => {
     }
     // ---- state ----
     if (p === '/api/state') {
-      return sendJson(res, {
-        adapters: ADAPTERS, adapter: process.env.RC_ADAPTER || 'mercibank', brains: brains.status(), running: run.running, stage: run.stage,
-        strategies: DEFAULT_STRATEGIES.map((s) => ({ id: s.id, family: s.family, objective: s.objective, orchestrator: s.orchestrator })),
-        profile: mem.loadProfile(), counts: countFindings(),
-        campaigns: campaignOptionsForUi(),
-      });
+      const adapterParam = url.searchParams.get('adapter');
+      return sendJson(res, dashboardStatePayload(adapterParam || undefined));
+    }
+    if (p === '/api/catalog') {
+      const adapterParam = url.searchParams.get('adapter');
+      return sendJson(res, buildStrategyCatalog(adapterParam || undefined));
     }
     if (p === '/api/findings') {
       const campaign = url.searchParams.get('campaign') || 'active';
@@ -335,8 +356,8 @@ const server = createServer(async (req, res) => {
       try {
         const fs = mem.loadAllFindingsForCampaign(parseCampaignQuery(campaign));
         const md = audience === 'stakeholder'
-          ? await stakeholderReport(fs, { brain: brains.available('report') })
-          : await developerReport(fs, { brain: brains.available('report') });
+          ? await stakeholderReport(fs, { brain: brains.available('report'), campaignId: campaign })
+          : await developerReport(fs, { brain: brains.available('report'), campaignId: campaign });
         return sendJson(res, { audience, campaign, md });
       } catch (e) {
         return sendJson(res, { error: e.message }, 400);

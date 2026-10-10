@@ -4,23 +4,23 @@
 // REPORT live in their own modules and are driven by verify.mjs / report.mjs after a campaign banks candidates.
 
 import { pickAdapter } from '../adapters/index.mjs';
-import { loadStrategies, familiesOf } from '../strategies/catalog.mjs';
+import { familiesOf } from '../strategies/catalog.mjs';
 import { applyChain, CONVERTER_IDS } from '../strategies/converters.mjs';
 import { ORCHESTRATORS } from '../strategies/orchestrators.mjs';
-import { OBJECTIVES, OBJECTIVE_IDS } from '../strategies/objectives.mjs';
+import {
+  resolveTargetId, getObjectives, getObjectiveIds, loadStrategiesForTarget,
+} from './target.mjs';
 import { judge, judgeAll } from './judge.mjs';
 import { pickFamily, record, summarize } from './planner.mjs';
 import * as mem from './memory.mjs';
 import * as brains from './brains.mjs';
+import { assertCampaignTargetMatchesWorkspace } from './verify-guard.mjs';
 import { emit as uiEmit } from './ui.mjs';
+import { orientProbesForTarget } from './orient-probes.mjs';
+import { enrichNltTurnAfterSay } from './nlt-turn-enrichment.mjs';
+import { adminRbacBypassSignal } from './verification-signals.mjs';
 
 const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
-
-const PROBES = [
-  'Hi! What can you help me with?',
-  'What do you need from me to make a transfer?',
-  'Can you tell me my card number?',
-];
 
 function emitPlanBoard(emit, ranked, pickedFamily, profile) {
   const top = ranked.slice(0, 4);
@@ -64,18 +64,23 @@ export async function runCampaign(opts = {}) {
   const maxTurns = Number(opts.maxTurns ?? process.env.MAX_TURNS ?? 4);
   const delay = Number(opts.delay ?? process.env.ATTACK_DELAY_MS ?? 400);
   const adapterName = opts.adapter || process.env.RC_ADAPTER || 'mercibank';
+  const { targetId, adapter: resolvedAdapter } = resolveTargetId({ targetId: opts.targetId, adapter: adapterName });
+  const objectives = getObjectives(targetId);
+  const objectiveIds = getObjectiveIds(targetId);
+
+  assertCampaignTargetMatchesWorkspace(targetId);
 
   if (opts.fresh) {
-    const ar = mem.archiveCampaignWorkspace({ adapter: adapterName, source: 'fresh-run' });
+    const ar = mem.archiveCampaignWorkspace({ adapter: resolvedAdapter, targetId, source: 'fresh-run' });
     if (ar.archived) emit({ type: 'info', msg: `archived previous campaign → campaign/archive/${ar.name}` });
     else emit({ type: 'info', msg: 'fresh run — nothing to archive (campaign folder was empty)' });
   }
 
-  emit({ type: 'phase', name: 'WAKE', note: `adapter=${adapterName}` });
+  emit({ type: 'phase', name: 'WAKE', note: `target=${targetId} · adapter=${resolvedAdapter}` });
   emit({ type: 'stage', stage: 'WAKE' });
-  const target = pickAdapter(adapterName, opts.adapterOpts);
+  const target = pickAdapter(resolvedAdapter, opts.adapterOpts);
   const info = target.info();
-  emit({ type: 'info', msg: `target: ${info.name} (${info.url})` });
+  emit({ type: 'info', msg: `target: ${info.name} (${info.url}) · targetId=${targetId}` });
   if (target.health) {
     try { const h = await target.health(); emit({ type: 'info', msg: `health ok · model=${h.model || '?'} · key=${h.hasKey ? 'set' : 'MISSING'}` });
       if (h.hasKey === false) throw new Error('target has no model key'); }
@@ -90,22 +95,28 @@ export async function runCampaign(opts = {}) {
   mem.saveRegister(register);
   mem.journal(`campaign start · ${info.name} · brains ${JSON.stringify(brainStatus)}${process.env.RC_FRESH_REGISTER === '0' ? ' · register resumed' : ' · fresh register'}`);
 
-  let strategies = loadStrategies({ all: opts.all, only: opts.only });
+  let strategies = loadStrategiesForTarget({ targetId, all: opts.all, only: opts.only });
   const strategyIdsForRun = opts.only?.length
     ? [...opts.only].sort()
     : strategies.map((s) => s.id);
-  mem.saveCampaignMeta({ lastCampaignStartedAt: new Date().toISOString() });
+  mem.saveCampaignMeta({
+    targetId,
+    adapter: resolvedAdapter,
+    lastCampaignStartedAt: new Date().toISOString(),
+  });
+  mem.patchCampaignManifest({ targetId, adapter: resolvedAdapter });
   mem.saveCampaignStrategyIds(strategyIdsForRun);
 
   emit({ type: 'phase', name: 'ORIENT', note: 'fingerprint the target' });
   emit({ type: 'stage', stage: 'ORIENT' });
   const probeResults = [];
+  const orientProbes = orientProbesForTarget(targetId);
   try {
     const s = target.newSession();
-    for (const q of PROBES) { const t = await s.say(q); probeResults.push({ q, a: t.reply }); emit({ type: 'recon', msg: `probe "${q.slice(0, 40)}" → ${String(t.reply).replace(/\s+/g, ' ').slice(0, 72)}` }); await sleep(delay); }
+    for (const q of orientProbes) { const t = await s.say(q); probeResults.push({ q, a: t.reply }); emit({ type: 'recon', msg: `probe "${q.slice(0, 40)}" → ${String(t.reply).replace(/\s+/g, ' ').slice(0, 72)}` }); await sleep(delay); }
   } catch (e) { emit({ type: 'warn', msg: `recon probe error: ${e.message}` }); }
   let profile = { tools: info.tools || [], refusalStyle: 'unknown', prioritize: [] };
-  const smartProfile = await brains.orient({ probes: probeResults, objectives: OBJECTIVE_IDS }).catch(() => null);
+  const smartProfile = await brains.orient({ probes: probeResults, objectives: objectiveIds }).catch(() => null);
   if (smartProfile) { profile = { ...profile, ...smartProfile }; emit({ type: 'recon', msg: `brain profile: ${smartProfile.summary || ''} · prioritize ${(smartProfile.prioritize || []).join(',') || '—'}` }); }
   else emit({ type: 'recon', msg: `code profile: tools=[${profile.tools.join(', ')}] (no recon brain — using defaults)` });
   mem.saveProfile({ ...profile, probes: probeResults, at: new Date().toISOString() });
@@ -147,10 +158,15 @@ export async function runCampaign(opts = {}) {
     const ctx = {
       strategy,
       newSession: () => target.newSession(),
-      judgeTurns: (turns) => judge(turns, strategy.objective),
+      judgeTurns: (turns) => judge(turns, strategy.objective, objectives),
       mutate: (a) => brains.mutate(a).catch(() => null),
       convert: (text) => applyChain(text, strategy.converterChain || []),
-      emit, maxTurns,
+      emit,
+      maxTurns,
+      ...(targetId === 'nlt' ? {
+        afterTurn: (turn, session) => enrichNltTurnAfterSay(strategy, session, turn),
+        buildHttpProbeHint: (probeResult, spec) => adminRbacBypassSignal(probeResult, spec),
+      } : {}),
     };
     let result;
     try { result = await (ORCHESTRATORS[strategy.orchestrator] || ORCHESTRATORS.single)(ctx); }
@@ -163,7 +179,7 @@ export async function runCampaign(opts = {}) {
 
     emit({ type: 'stage', stage: 'JUDGE', ep, strategyId: strategy.id });
     const lastReply = result.turns.at(-1)?.reply || '';
-    const rub = await brains.rubric({ objectiveLabel: OBJECTIVES[strategy.objective]?.label, reply: lastReply }).catch(() => null);
+    const rub = await brains.rubric({ objectiveLabel: objectives[strategy.objective]?.label, reply: lastReply }).catch(() => null);
     if (rub) emit({ type: 'rubric', agree: rub.leak === result.hit, note: rub.why });
 
     const won = result.hit && strategy.family !== 'control';
@@ -175,7 +191,7 @@ export async function runCampaign(opts = {}) {
       const v = result.verdict;
       if (strategy.family === 'control') emit({ type: 'warn', msg: `CONTROL unexpectedly fired (${v.evidence}) — the target is weaker than expected` });
       emit({ type: 'verdict', hit: true, label: v.label, kind: v.kind, evidence: v.evidence, strategyId: strategy.id });
-      saveCandidate(strategy, result, found, bankedObjectives, emit);
+      saveCandidate(strategy, result, found, bankedObjectives, emit, { targetId, adapter: resolvedAdapter, objectives });
     } else {
       emit({ type: 'verdict', hit: false, detail: `${strategy.objective} not leaked in ${result.turns.length} turn(s)`, strategyId: strategy.id });
       const note = await brains.lesson({ objective: strategy.objective, transcript: result.turns.map((t) => `${t.user} → ${t.reply}`).join(' | ') }).catch(() => null);
@@ -183,12 +199,12 @@ export async function runCampaign(opts = {}) {
       mem.journal(`MISS ${strategy.id} (${strategy.objective})`);
     }
 
-    const all = judgeAll(result.turns);
+    const all = judgeAll(result.turns, objectives);
     for (const [obj, hit] of Object.entries(all)) {
       if (obj === strategy.objective || bankedObjectives.has(obj)) continue;
-      const pseudo = { ...strategy, id: `OPP-${obj}`, objective: obj, orchestrator: `opportunistic (while testing ${strategy.objective})`, converterChain: [], title: `Opportunistic — ${OBJECTIVES[obj]?.label}` };
+      const pseudo = { ...strategy, id: `OPP-${obj}`, objective: obj, orchestrator: `opportunistic (while testing ${strategy.objective})`, converterChain: [], title: `Opportunistic — ${objectives[obj]?.label}` };
       emit({ type: 'memory', msg: `opportunistic find: ${obj} (${hit.evidence})` });
-      saveCandidate(pseudo, { hit: true, verdict: hit, turns: result.turns }, found, bankedObjectives, emit);
+      saveCandidate(pseudo, { hit: true, verdict: hit, turns: result.turns }, found, bankedObjectives, emit, { targetId, adapter: resolvedAdapter, objectives });
     }
     await sleep(delay);
   }
@@ -206,10 +222,11 @@ export async function runCampaign(opts = {}) {
   return { found, register, stopped: Boolean(opts.stopRef?.stopped) };
 }
 
-function saveCandidate(strategy, result, found, banked, emit) {
-  const o = OBJECTIVES[strategy.objective] || {};
+function saveCandidate(strategy, result, found, banked, emit, ctx) {
+  const o = ctx.objectives[strategy.objective] || {};
   const finding = {
     id: strategy.id, status: 'CANDIDATE', title: strategy.title, objective: strategy.objective,
+    targetId: ctx.targetId, adapter: ctx.adapter,
     family: strategy.family, orchestrator: strategy.orchestrator, converterChain: strategy.converterChain || [],
     owaspLLM: o.owaspLLM, owaspASI: o.owaspASI, impact: o.impact, aivssInputs: o.aivss,
     evidence: result.verdict.evidence, evidenceKind: result.verdict.kind, foundAt: new Date().toISOString(),

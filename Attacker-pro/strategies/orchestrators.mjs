@@ -29,6 +29,7 @@ async function execTurn(ctx, session, sent, source, turns, judgeTurns) {
   let turn;
   try {
     turn = await session.say(sent);
+    if (ctx.afterTurn) await ctx.afterTurn(turn, session);
   } catch (e) {
     const ms = Date.now() - t0;
     ctx.emit?.({ type: 'turn', strategyId: ctx.strategy.id, turn: turnNum, source, outcome: 'transport', ms, tokens: null, user: sent, reply: '', error: e.message });
@@ -132,6 +133,29 @@ export const ORCHESTRATORS = {
     }
     const best = branches[0];
     return { hit: false, verdict: { hit: false }, turns: best?.turns || [] };
+  },
+
+  async httpProbe(ctx) {
+    const spec = ctx.strategy.httpProbe;
+    if (!spec?.path) throw new Error('httpProbe strategy missing httpProbe.path');
+    const s = ctx.newSession(spec.session || {});
+    if (typeof s.probeGet !== 'function') {
+      throw new Error('httpProbe requires adapter session.probeGet (NLT read-only GET)');
+    }
+    const probeResult = await s.probeGet(spec.path);
+    const hintBuilder = ctx.buildHttpProbeHint || (() => ({}));
+    const findingsHint = hintBuilder(probeResult, spec);
+    const turn = {
+      user: `[HTTP GET ${spec.path}]`,
+      reply: '',
+      toolCalls: [],
+      retrieved: [],
+      findingsHint: { ...findingsHint },
+      traceId: undefined,
+      sessionId: s.id,
+    };
+    const verdict = ctx.judgeTurns([turn]);
+    return { hit: verdict.hit, verdict, turns: [turn] };
   },
 
   async chain(ctx) {

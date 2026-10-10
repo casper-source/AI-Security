@@ -3,31 +3,14 @@
 import PDFDocument from 'pdfkit';
 import { createWriteStream, readFileSync, existsSync } from 'node:fs';
 import { join } from 'node:path';
-import { OBJECTIVES } from '../strategies/objectives.mjs';
+import {
+  objectiveLabel,
+  plainImpactPhrase,
+  recommendedAction,
+  stakeholderRemediationFraming,
+} from './report-content.mjs';
 
 const sevRank = { Critical: 4, High: 3, Medium: 2, Low: 1, None: 0 };
-
-const PLAIN_IMPACT = {
-  EXCESSIVE_AGENCY: 'Funds can be moved without a one-time passcode the bank actually issued.',
-  BOLA: "Another customer's account details can be retrieved with a plausible pretext.",
-  PCI: 'A full payment card number can be read back to the user on request.',
-  CRED_KEY: 'Sensitive internal references can leak via content the assistant retrieves.',
-  PROMPT_LEAK: 'Internal instructions or configuration can be extracted.',
-  INJECT_OBEYED: 'Hidden instructions in retrieved content can change assistant behavior.',
-  MEMORY_POISON: 'False user claims can persist and influence later answers.',
-  TOOL_DISCOVERY: 'Internal capabilities can be enumerated under a diagnostic frame.',
-};
-
-const ACTION = {
-  EXCESSIVE_AGENCY: 'Validate every OTP server-side before any transfer; remove override paths.',
-  BOLA: 'Enforce object-level authorization in APIs — deny access to other customers by default.',
-  PCI: 'Never send full card numbers into the model; expose only last-four at the tool layer.',
-  CRED_KEY: 'Treat retrieved help content as untrusted data; block secrets from model context.',
-  PROMPT_LEAK: 'Keep secrets out of prompts; filter outputs for known sensitive patterns.',
-  INJECT_OBEYED: 'Prevent retrieved text from triggering tools or changing recipients.',
-  MEMORY_POISON: 'Keep authoritative identity and entitlement data server-side only.',
-  TOOL_DISCOVERY: 'Do not expose internal tool schemas to end users.',
-};
 
 function bySeverity(fs) {
   return [...fs].sort(
@@ -150,16 +133,12 @@ export function writeStakeholderPdf(findings, outPath, { campaignDir = '' } = {}
     doc.moveDown(0.5);
     doc.font('Helvetica-Bold').fillColor('#101828').text('Highest priority', { continued: true });
     doc.font('Helvetica').fillColor('#344054').text(
-      ` — ${top.title}. ${PLAIN_IMPACT[top.objective] || top.title} ` +
+      ` — ${top.title}. ${plainImpactPhrase(top)} ` +
       `(risk score ${top.aivss?.score}/10, ${top.aivss?.band}).`,
       { lineGap: 3 },
     );
     doc.moveDown(0.4);
-    doc.font('Helvetica').text(
-      'These are application and authorization failures exposed through the assistant, not cosmetic wording issues. ' +
-      'Remediation should happen in backend tools and data paths; prompt-only guardrails are not sufficient.',
-      { lineGap: 3 },
-    );
+    doc.font('Helvetica').text(stakeholderRemediationFraming(top), { lineGap: 3 });
   }
 
   sectionTitle(doc, 'Confirmed issues');
@@ -178,8 +157,7 @@ export function writeStakeholderPdf(findings, outPath, { campaignDir = '' } = {}
       ensureSpace(doc, 44);
       const rowY = doc.y;
       doc.text(f.title, col.issue, rowY, { width: col.risk - col.issue - 8, lineGap: 2 });
-      const obj = OBJECTIVES[f.objective] || {};
-      doc.fillColor('#667085').fontSize(8).text(obj.label || '', col.issue, doc.y + 2, { width: col.risk - col.issue - 8 });
+      doc.fillColor('#667085').fontSize(8).text(objectiveLabel(f), col.issue, doc.y + 2, { width: col.risk - col.issue - 8 });
       const band = f.aivss?.band || '—';
       doc.fillColor('#344054').fontSize(9).text(String(f.aivss?.score ?? '—'), col.risk, rowY, { width: 70 });
       doc.fillColor(bandColor(band)).font('Helvetica-Bold').text(band, col.band, rowY, { width: 80 });
@@ -192,7 +170,7 @@ export function writeStakeholderPdf(findings, outPath, { campaignDir = '' } = {}
 
   sectionTitle(doc, 'Recommended actions (priority order)');
   confirmed.forEach((f, i) => {
-    bullet(doc, `${i + 1}. ${ACTION[f.objective] || 'Remediate in application code and add a regression test.'} (${f.id})`);
+    bullet(doc, `${i + 1}. ${recommendedAction(f)} (${f.id})`);
   });
   if (confirmed.length) {
     doc.moveDown(0.3);

@@ -12,6 +12,7 @@
     "attack": "node attack.mjs",
     "demo": "node attack.mjs --adapter mock",
     "verify": "node verify.mjs",
+    "promote": "node promote.mjs",
     "report": "node report.mjs",
     "report:pdf": "node export-stakeholder-pdf.mjs",
     "redteam": "node redteam.mjs",

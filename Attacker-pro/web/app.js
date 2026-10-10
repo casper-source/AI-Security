@@ -1227,12 +1227,29 @@ function setRunning(v) {
 }
 function setBadge() { const b = $('#statusBadge'); b.textContent = running ? '● running' : '○ idle'; b.className = 'badge ' + (running ? 'live' : 'idle'); }
 
+function renderStrategyCatalog(cat) {
+  if (!cat) return;
+  $('#metaTarget').textContent = `target: ${cat.targetId} · adapter: ${cat.adapter}`;
+  const list = $('#strategyList');
+  const strategies = cat.strategies || [];
+  if (!strategies.length) {
+    list.innerHTML = `<p class="strategy-empty" style="color:var(--mut);font-size:0.9rem;margin:0.35rem 0">${esc(cat.emptyMessage || 'No strategies available for this target yet.')}</p>`;
+    return;
+  }
+  list.innerHTML = strategies.map((st) => `<div class="chk"><input type="checkbox" value="${st.id}" id="s_${st.id}"><label for="s_${st.id}" style="margin:0">${st.id} <span style="color:var(--mut)">${st.objective}</span></label></div>`).join('');
+}
+
+async function reloadCatalogForAdapter(adapter) {
+  const cat = await fetch(`/api/catalog?adapter=${encodeURIComponent(adapter)}`).then((r) => r.json());
+  renderStrategyCatalog(cat);
+  return cat;
+}
+
 async function loadState() {
   const s = await fetch('/api/state').then((r) => r.json());
   const sel = $('#adapter'); sel.innerHTML = s.adapters.map((a) => `<option ${a === s.adapter ? 'selected' : ''}>${a}</option>`).join('');
-  $('#metaTarget').textContent = 'target: ' + (s.adapter || sel.value);
   $('#metaBrains').textContent = 'brains: ' + Object.entries(s.brains).map(([k, v]) => `${k}=${v || 'code'}`).join(' ');
-  $('#strategyList').innerHTML = s.strategies.map((st) => `<div class="chk"><input type="checkbox" value="${st.id}" id="s_${st.id}"><label for="s_${st.id}" style="margin:0">${st.id} <span style="color:var(--mut)">${st.objective}</span></label></div>`).join('');
+  renderStrategyCatalog(s);
   running = s.running; setRunning(s.running);
   updateCounts(s.counts);
   resetLiveUI('campaign');
@@ -1242,7 +1259,9 @@ async function loadState() {
 }
 function updateCounts(c) { if (!c) return; $('#fCount').textContent = c.total ? `${c.confirmed}✓ / ${c.total}` : ''; }
 
-$('#adapter').addEventListener('change', () => $('#metaTarget').textContent = 'target: ' + $('#adapter').value);
+$('#adapter').addEventListener('change', () => {
+  reloadCatalogForAdapter($('#adapter').value).catch(() => {});
+});
 
 $('#saveCfg').onclick = async () => {
   const r = await fetch('/api/config', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({
@@ -1251,6 +1270,7 @@ $('#saveCfg').onclick = async () => {
   }) }).then((r) => r.json());
   $('#llmKey').value = '';
   $('#metaBrains').textContent = 'brains: ' + Object.entries(r.brains).map(([k, v]) => `${k}=${v || 'code'}`).join(' ');
+  await reloadCatalogForAdapter($('#adapter').value);
   flash('#saveCfg', 'Saved ✓');
 };
 $('#runBtn').onclick = async () => {

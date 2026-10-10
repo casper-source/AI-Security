@@ -28,8 +28,8 @@ async function main() {
       return;
     }
 
-    const dev = await developerReport(findings, { brain });
-    const exec = await stakeholderReport(findings, { brain });
+    const dev = await developerReport(findings, { brain, campaignId: campaign });
+    const exec = await stakeholderReport(findings, { brain, campaignId: campaign });
     const p1 = mem.saveReport('developer.md', dev);
     const p2 = mem.saveReport('stakeholder.md', exec);
     emit({ type: 'report', path: p1.replace(process.cwd() + '/', '') });

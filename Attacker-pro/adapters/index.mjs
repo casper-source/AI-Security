@@ -1,7 +1,7 @@
 // adapters/index.mjs — pick the target adapter, and enforce the Rules of Engagement on any network target.
 //
 // Adapter interface (every adapter returns this):
-//   { info() → {kind,name,url,tools?}, health?() → {ok,model,hasKey}, newSession() → { id, say(text) → turn } }
+//   { info() → {kind,name,url,tools?}, health?() → {ok,model,hasKey}, newSession() → { id, say(text) → turn [, getTicketState?] } }
 //   turn = { user, reply, toolCalls[], retrieved[], findingsHint{}, traceId, sessionId }
 //
 // ROE: localhost/127.0.0.1 is always allowed (the cohort lab). ANY other host is REFUSED unless the operator
@@ -12,6 +12,7 @@ import { create as mock } from './mock.mjs';
 import { create as mercibank } from './mercibank.mjs';
 import { create as openai } from './openai.mjs';
 import { create as http } from './http.mjs';
+import { create as nlt } from './nlt.mjs';
 
 export function assertRoe(url) {
   let host;
@@ -31,8 +32,9 @@ export function pickAdapter(name = process.env.RC_ADAPTER || 'mercibank', opts =
     case 'mercibank': return mercibank(opts);
     case 'openai':    return openai(opts);
     case 'http':      return http(opts);
-    default: throw new Error(`unknown adapter "${name}" (use: mock | mercibank | openai | http)`);
+    case 'nlt':       return nlt(opts);
+    default: throw new Error(`unknown adapter "${name}" (use: mock | mercibank | openai | http | nlt)`);
   }
 }
 
-export const ADAPTERS = ['mock', 'mercibank', 'openai', 'http'];
+export const ADAPTERS = ['mock', 'mercibank', 'openai', 'http', 'nlt'];

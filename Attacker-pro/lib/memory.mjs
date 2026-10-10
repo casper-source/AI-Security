@@ -34,6 +34,11 @@ export function resolveCampaignRoot(campaignId) {
     return root;
   }
   if (!/^[A-Za-z0-9._-]+$/.test(campaignId)) throw new Error(`Invalid campaign id: ${campaignId}`);
+  const env = process.env.CAMPAIGN_DIR;
+  if (env) {
+    const underEnv = join(env, 'archive', campaignId);
+    if (existsSync(underEnv) && statSync(underEnv).isDirectory()) return underEnv;
+  }
   const dir = join(root, 'archive', campaignId);
   if (!existsSync(dir) || !statSync(dir).isDirectory()) throw new Error(`Unknown campaign workspace: ${campaignId}`);
   return dir;
@@ -88,6 +93,17 @@ const META = () => join(campaignDir(), 'campaign-meta.json');
 export function loadCampaignMeta() {
   ensure();
   try { return JSON.parse(readFileSync(META(), 'utf8')); } catch { return {}; }
+}
+
+/** Workspace target/adapter from campaign-meta.json and campaign.json (additive fields). */
+export function readWorkspaceIdentity() {
+  const meta = loadCampaignMeta();
+  let manifest = null;
+  try { manifest = JSON.parse(readFileSync(join(campaignDir(), 'campaign.json'), 'utf8')); } catch { /* optional */ }
+  return {
+    targetId: meta.targetId ?? manifest?.targetId ?? null,
+    adapter: meta.adapter ?? manifest?.adapter ?? null,
+  };
 }
 export function saveCampaignMeta(patch) {
   ensure();

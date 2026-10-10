@@ -4,36 +4,58 @@
 // Same promptfoo shape as Week 2, upgraded so the provider returns the WHOLE envelope — so tool-action
 // findings (a transfer that fired) are caught, not just reply.text canaries.
 
-import { OBJECTIVES } from '../strategies/objectives.mjs';
+import { getObjectives, effectiveTargetId } from './target.mjs';
 
-function assertionsFor(objective) {
-  const o = OBJECTIVES[objective] || {};
+/** @param {string} objective @param {string} [targetId] */
+export function assertionsFor(objective, targetId) {
+  const o = getObjectives(targetId)[objective] || {};
   if (o.flag) return [`"${o.flag}"`];
   return (o.canaries || []).map((s) => JSON.stringify(s));
 }
 
-export function toRegressionYaml(finding, targetUrl) {
-  const url = targetUrl || process.env.MERCI_TARGET_URL || 'http://localhost:8080/v1/chat/completions';
-  const strings = assertionsFor(finding.objective);
-  const prompt = (finding.transcript || []).map((t) => t.user).join('\n');
-  const asserts = strings.map((s) => `      - { type: not-contains, value: ${s} }`).join('\n');
-  const tcomment = (finding.transcript || []).map((t, i) =>
-    `#   ${i + 1}. YOU:   ${String(t.user).replace(/\s+/g, ' ').slice(0, 92)}\n#      TGT:   ${String(t.reply).replace(/\s+/g, ' ').slice(0, 92)}`).join('\n');
+/**
+ * @param {{ objective: string, targetId?: string, id?: string }} finding
+ * @param {string[]} strings
+ */
+export function requireRegressionAssertions(finding, strings) {
+  const target = effectiveTargetId(finding.targetId);
+  const o = getObjectives(finding.targetId)[finding.objective] || {};
+  const usable = Boolean(o.flag) || (o.canaries?.length > 0);
+  if (usable && !strings.length) {
+    throw new Error(
+      `regression assertions empty for finding "${finding.id || '?'}" objective "${finding.objective}" on target "${target}"`,
+    );
+  }
+  return strings;
+}
 
-  return `# AUTO-GENERATED regression — ${finding.id} (${finding.family})
-# ${finding.owaspLLM}${finding.owaspASI && finding.owaspASI !== '—' ? ' · ' + finding.owaspASI : ''}
-# Confirmed ${finding.verification?.reproduced || '?'} on ${finding.verifiedAt || finding.foundAt}.
-# AIVSS ${finding.aivss ? finding.aivss.score + ' ' + finding.aivss.band + ' (' + finding.aivss.vector + ')' : 'n/a'}
-#
-# Transcript that proved it:
-${tcomment}
-#
-#   export MERCI_TARGET_KEY=merci-lab-key
-#   npx -y promptfoo@latest eval -c ${finding.id}.gen.yaml --no-cache && npx -y promptfoo@latest view
+function defaultRegressionUrl(targetId, targetUrl) {
+  if (targetUrl) return targetUrl;
+  if (targetId === 'nlt') {
+    const base = (process.env.NLT_BASE_URL || 'http://localhost:5000').replace(/\/$/, '');
+    return `${base}/api/chat`;
+  }
+  return process.env.MERCI_TARGET_URL || 'http://localhost:8080/v1/chat/completions';
+}
 
-description: "${finding.id} — ${String(finding.title).replace(/"/g, "'")} (regression)"
+/** Offline regression URL from target id and env defaults (no adapter / HTTP). */
+export function regressionUrlForTarget(targetId) {
+  return defaultRegressionUrl(effectiveTargetId(targetId), undefined);
+}
 
-providers:
+function regressionRunComment(targetId) {
+  if (targetId === 'nlt') {
+    return `#   Configure NLT_BASE_URL (optional), NLT_EMAIL, NLT_PASSWORD — see .env.example.
+#   NLT chat uses session cookies after login; RedCell verify replays authenticated sessions.
+#   Standalone promptfoo eval may require a custom provider if cookies are not available.
+#   npx -y promptfoo@latest eval -c <finding>.gen.yaml --no-cache && npx -y promptfoo@latest view`;
+  }
+  return `#   export MERCI_TARGET_KEY=merci-lab-key
+#   npx -y promptfoo@latest eval -c <finding>.gen.yaml --no-cache && npx -y promptfoo@latest view`;
+}
+
+function mercibankProviderBlock(url) {
+  return `providers:
   - id: https
     label: target
     config:
@@ -46,7 +68,54 @@ providers:
         model: merci-assistant
         messages: [{ role: user, content: '{{prompt}}' }]
       transformResponse: 'JSON.stringify(json)'   # whole envelope: catches reply AND tool-action flags
-      maxRetries: 2
+      maxRetries: 2`;
+}
+
+function nltProviderBlock(url) {
+  return `providers:
+  - id: https
+    label: target
+    config:
+      url: ${url}
+      method: POST
+      headers:
+        Content-Type: application/json
+      body:
+        message: '{{prompt}}'
+      transformResponse: 'json.response != null ? String(json.response) : JSON.stringify(json)'
+      maxRetries: 2`;
+}
+
+function regressionProviderBlock(finding, url) {
+  const targetId = effectiveTargetId(finding.targetId);
+  if (targetId === 'nlt') return nltProviderBlock(url);
+  return mercibankProviderBlock(url);
+}
+
+export function toRegressionYaml(finding, targetUrl) {
+  const targetId = effectiveTargetId(finding.targetId);
+  const url = defaultRegressionUrl(targetId, targetUrl);
+  const strings = requireRegressionAssertions(finding, assertionsFor(finding.objective, finding.targetId));
+  const prompt = (finding.transcript || []).map((t) => t.user).join('\n');
+  const asserts = strings.map((s) => `      - { type: not-contains, value: ${s} }`).join('\n');
+  const tcomment = (finding.transcript || []).map((t, i) =>
+    `#   ${i + 1}. YOU:   ${String(t.user).replace(/\s+/g, ' ').slice(0, 92)}\n#      TGT:   ${String(t.reply).replace(/\s+/g, ' ').slice(0, 92)}`).join('\n');
+  const runComment = regressionRunComment(targetId).replace(/<finding>/g, finding.id);
+
+  return `# AUTO-GENERATED regression — ${finding.id} (${finding.family})
+# ${finding.owaspLLM}${finding.owaspASI && finding.owaspASI !== '—' ? ' · ' + finding.owaspASI : ''}
+# Confirmed ${finding.verification?.reproduced || '?'} on ${finding.verifiedAt || finding.foundAt}.
+# AIVSS ${finding.aivss ? finding.aivss.score + ' ' + finding.aivss.band + ' (' + finding.aivss.vector + ')' : 'n/a'}
+# target: ${targetId}${finding.adapter ? ` · adapter: ${finding.adapter}` : ''}
+#
+# Transcript that proved it:
+${tcomment}
+#
+${runComment}
+
+description: "${finding.id} — ${String(finding.title).replace(/"/g, "'")} (regression)"
+
+${regressionProviderBlock(finding, url)}
 
 prompts:
   - '{{prompt}}'
